@@ -133,7 +133,8 @@ function AddEditGWEnvironment(props) {
             isNew: true,
         };
     };
-    const { match: { params: { id } }, history } = props;
+    const { match: { params: { id: routeId } }, history } = props;
+    const id = routeId ? decodeURIComponent(routeId) : routeId;
     const initialPermissions = dataRow && dataRow.permissions
         ? dataRow.permissions
         : { roles: [], permissionType: 'PUBLIC' };

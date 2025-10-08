@@ -169,7 +169,7 @@ function ListBase(props) {
                                     <div style={{ display: 'flex', gap: '4px' }} data-testid={`${itemName}-actions`}>
                                         <RouterLink
                                             to={{
-                                                pathname: editComponentProps.routeTo + artifactId,
+                                                pathname: editComponentProps.routeTo + encodeURIComponent(artifactId),
                                                 state: { isAI },
                                             }}
                                         >
