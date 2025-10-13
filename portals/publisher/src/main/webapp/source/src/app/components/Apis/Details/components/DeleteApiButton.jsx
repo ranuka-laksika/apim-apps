@@ -156,6 +156,7 @@ class DeleteApiButton extends React.Component {
                             id: 'Apis.Details.components.api.product.delete.error',
                             defaultMessage: 'Something went wrong while deleting the API Product!',
                         }));
+                        setLoading(false);
                         return;
                     }
                     Alert.info(intl.formatMessage({
@@ -166,8 +167,14 @@ class DeleteApiButton extends React.Component {
                         name,
                     }));
                     if (updateData) {
-                        updateData(id);
-                        setLoading(false);
+                        const updatePromise = updateData(id);
+                        if (updatePromise && updatePromise.finally) {
+                            updatePromise.finally(() => {
+                                setLoading(false);
+                            });
+                        } else {
+                            setLoading(false);
+                        }
                     } else {
                         history.push('/api-products');
                     }
@@ -192,6 +199,7 @@ class DeleteApiButton extends React.Component {
                             id: 'Apis.Details.components.api.mcp.delete.error',
                             defaultMessage: 'Something went wrong while deleting the MCP Server!',
                         }));
+                        setLoading(false);
                         return;
                     }
                     Alert.info(intl.formatMessage({
@@ -202,8 +210,14 @@ class DeleteApiButton extends React.Component {
                         name,
                     }));
                     if (updateData) {
-                        updateData(id);
-                        setLoading(false);
+                        const updatePromise = updateData(id);
+                        if (updatePromise && updatePromise.finally) {
+                            updatePromise.finally(() => {
+                                setLoading(false);
+                            });
+                        } else {
+                            setLoading(false);
+                        }
                     } else {
                         history.push('/mcp-servers');
                     }
@@ -228,6 +242,7 @@ class DeleteApiButton extends React.Component {
                             id: 'Apis.Details.components.api.delete.error',
                             defaultMessage: 'Something went wrong while deleting the API!',
                         }));
+                        setLoading(false);
                         return;
                     }
                     Alert.info(intl.formatMessage({
@@ -238,8 +253,14 @@ class DeleteApiButton extends React.Component {
                         name,
                     }));
                     if (updateData) {
-                        updateData(id);
-                        setLoading(false);
+                        const updatePromise = updateData(id);
+                        if (updatePromise && updatePromise.finally) {
+                            updatePromise.finally(() => {
+                                setLoading(false);
+                            });
+                        } else {
+                            setLoading(false);
+                        }
                     } else {
                         history.push('/apis');
                     }

@@ -180,6 +180,7 @@ class DeleteApiButton extends React.Component {
                             { typeName }
                         )
                     );
+                    setLoading(false);
                     return;
                 }
                 Alert.info(
@@ -192,8 +193,17 @@ class DeleteApiButton extends React.Component {
                     )
                 );
                 if (updateData) {
-                    updateData(id);
-                    setLoading(false);
+                    // Call updateData which will refresh the list and update count
+                    // updateData returns a promise from getData, so we wait for it to complete
+                    const updatePromise = updateData(id);
+                    if (updatePromise && updatePromise.finally) {
+                        updatePromise.finally(() => {
+                            setLoading(false);
+                        });
+                    } else {
+                        // Fallback if updateData doesn't return a promise
+                        setLoading(false);
+                    }
                 } else {
                     history.push(redirectPath);
                 }

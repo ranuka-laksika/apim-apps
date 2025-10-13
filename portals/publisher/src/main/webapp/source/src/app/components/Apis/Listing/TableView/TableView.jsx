@@ -302,7 +302,7 @@ class TableView extends React.Component {
         if (totalCount - 1 === rowsPerPage * page && page !== 0) {
             newPage = page - 1;
         }
-        this.getData(rowsPerPage, newPage);
+        return this.getData(rowsPerPage, newPage);
     }
 
     /**
