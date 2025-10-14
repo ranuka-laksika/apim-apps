@@ -296,13 +296,36 @@ class TableView extends React.Component {
      * @param {String} apiUUID UUID(ID) of the deleted API
      * @memberof Listing
      */
-    updateData() {
-        const { rowsPerPage, page, totalCount } = this.state;
+    updateData(apiUUID) {
+        const { rowsPerPage, page, totalCount, apisAndApiProducts } = this.state;
+
+        // Remove the deleted API/Product from the current list
+        const updatedList = apisAndApiProducts.filter((item) => item.id !== apiUUID);
+
+        // Decrement the total count
+        const newTotalCount = Math.max(0, totalCount - 1);
+
+        // Calculate new page if needed (when deleting last item on a page)
         let newPage = page;
-        if (totalCount - 1 === rowsPerPage * page && page !== 0) {
+        if (newTotalCount === rowsPerPage * page && page !== 0) {
             newPage = page - 1;
         }
-        this.getData(rowsPerPage, newPage);
+
+        // If we've deleted the last item on the current page and need to go back a page, fetch new data
+        if (newPage !== page || updatedList.length === 0) {
+            // Page changed or no items left, need to fetch data for the new page
+            this.setState({ totalCount: newTotalCount });
+            return this.getData(rowsPerPage, newPage);
+        }
+
+        // Otherwise, just update state with filtered list and decremented count for instant UI feedback
+        this.setState({
+            apisAndApiProducts: updatedList,
+            totalCount: newTotalCount,
+        });
+
+        // Return a resolved promise to match the expected interface
+        return Promise.resolve();
     }
 
     /**
