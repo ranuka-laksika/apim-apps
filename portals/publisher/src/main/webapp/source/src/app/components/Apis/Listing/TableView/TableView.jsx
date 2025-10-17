@@ -309,11 +309,13 @@ class TableView extends React.Component {
                 rowsPerPage,
                 page,
             });
-        }).catch(() => {
+            return data; // Return data for promise chaining
+        }).catch((error) => {
             Alert.error(intl.formatMessage({
                 defaultMessage: 'Error While Loading APIs',
                 id: 'Apis.Listing.TableView.TableView.error.loading',
             }));
+            throw error; // Re-throw error for proper error handling in calling method
         }).finally(() => {
             this.setState({ loading: false });
         });
@@ -327,17 +329,26 @@ class TableView extends React.Component {
      */
     updateData() {
         const { rowsPerPage, page, totalCount } = this.state;
-        // Immediately decrement the total count for instant UI feedback
-        this.setState({ totalCount: Math.max(0, totalCount - 1) });
 
+        // Calculate new total count and page
+        const newTotalCount = Math.max(0, totalCount - 1);
         let newPage = page;
-        if (totalCount - 1 === rowsPerPage * page && page !== 0) {
-            newPage = page - 1;
+
+        // If we're on the last page and it becomes empty, go to previous page
+        if (newTotalCount <= rowsPerPage * page && page > 0) {
+            newPage = Math.max(0, page - 1);
         }
-        // Fetch fresh list data without overwriting the decremented count
-        setTimeout(() => {
-            this.getDataListOnly(rowsPerPage, newPage);
-        }, 1000);
+
+        // Update the total count immediately for instant UI feedback
+        this.setState({ totalCount: newTotalCount });
+
+        // Fetch fresh list data without overwriting the updated count
+        this.getDataListOnly(rowsPerPage, newPage).then(() => {
+            // Ensure the total count is accurate after data refresh
+            this.setState(prevState => ({
+                totalCount: Math.max(prevState.totalCount, newTotalCount)
+            }));
+        });
     }
 
     /**
