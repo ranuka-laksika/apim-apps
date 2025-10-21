@@ -327,17 +327,13 @@ class TableView extends React.Component {
      */
     updateData() {
         const { rowsPerPage, page, totalCount } = this.state;
-        // Immediately decrement the total count for instant UI feedback
-        this.setState({ totalCount: Math.max(0, totalCount - 1) });
 
         let newPage = page;
         if (totalCount - 1 === rowsPerPage * page && page !== 0) {
             newPage = page - 1;
         }
-        // Fetch fresh list data without overwriting the decremented count
-        setTimeout(() => {
-            this.getDataListOnly(rowsPerPage, newPage);
-        }, 1000);
+        // Fetch fresh list data and updated total count from server
+        this.getData(rowsPerPage, newPage);
     }
 
     /**
