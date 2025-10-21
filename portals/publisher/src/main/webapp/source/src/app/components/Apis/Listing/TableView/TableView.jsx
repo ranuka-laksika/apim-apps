@@ -325,19 +325,35 @@ class TableView extends React.Component {
      * @param {String} apiUUID UUID(ID) of the deleted API
      * @memberof Listing
      */
-    updateData() {
-        const { rowsPerPage, page, totalCount } = this.state;
-        // Immediately decrement the total count for instant UI feedback
-        this.setState({ totalCount: Math.max(0, totalCount - 1) });
+    updateData(apiUUID) {
+        const { rowsPerPage, page, totalCount, apisAndApiProducts } = this.state;
 
+        // Immediately decrement the total count for instant UI feedback
+        const newTotalCount = Math.max(0, totalCount - 1);
+
+        // Remove the deleted API from the current list for immediate visual feedback
+        let updatedList = apisAndApiProducts;
+        if (apiUUID && apisAndApiProducts) {
+            updatedList = apisAndApiProducts.filter(api => api.id !== apiUUID);
+        }
+
+        // Calculate new page if current page would be empty
         let newPage = page;
-        if (totalCount - 1 === rowsPerPage * page && page !== 0) {
+        if (newTotalCount === rowsPerPage * page && page !== 0) {
             newPage = page - 1;
         }
-        // Fetch fresh list data without overwriting the decremented count
+
+        // Update state immediately for instant UI feedback
+        this.setState({
+            totalCount: newTotalCount,
+            apisAndApiProducts: updatedList,
+            page: newPage
+        });
+
+        // Refresh the data after a short delay to ensure consistency with backend
         setTimeout(() => {
             this.getDataListOnly(rowsPerPage, newPage);
-        }, 1000);
+        }, 500);
     }
 
     /**
