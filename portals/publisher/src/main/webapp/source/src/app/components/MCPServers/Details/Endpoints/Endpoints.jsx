@@ -28,12 +28,18 @@ import {
     DialogActions,
     Button,
     Box,
+    Chip,
+    FormControlLabel,
+    Radio,
+    RadioGroup,
+    CircularProgress,
 } from '@mui/material';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { isRestricted } from 'AppData/AuthManager';
 import PropTypes from 'prop-types';
 import { Progress } from 'AppComponents/Shared';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import MCPServer from 'AppData/MCPServer';
 import Alert from 'AppComponents/Shared/Alert';
 import AddCircle from '@mui/icons-material/AddCircle';
@@ -58,6 +64,16 @@ const Endpoints = ({
         open: false,
         endpointType: null,
         endpoint: null,
+    });
+    const [refetchModal, setRefetchModal] = useState({
+        open: false,
+        isRefetching: false,
+        refetchedOperations: [],
+        refetchStrategy: 'replace',
+    });
+    const [sourceInfo, setSourceInfo] = useState({
+        type: null,
+        url: null
     });
 
     const intl = useIntl();
@@ -130,8 +146,125 @@ const Endpoints = ({
             .finally(() => setLoading(false));
     };
 
+    /**
+     * Detect the source information for the MCP Server to enable refetch functionality
+     */
+    const detectSourceInfo = () => {
+        if (!apiObject.additionalProperties) {
+            return;
+        }
+
+        try {
+            const additionalProps = typeof apiObject.additionalProperties === 'string'
+                ? JSON.parse(apiObject.additionalProperties)
+                : apiObject.additionalProperties;
+
+            if (additionalProps.url) {
+                // Determine if it's an OpenAPI URL or MCP Proxy based on the MCP Server type
+                if (apiObject.type === 'MCP' || apiObject.apiType === 'MCP') {
+                    // Check if it's a proxy by looking at the endpoint configuration
+                    const isProxy = additionalProps.isProxy ||
+                                   (apiObject.context && apiObject.context.includes('/mcp-proxy/'));
+
+                    setSourceInfo({
+                        type: isProxy ? 'MCP_PROXY' : 'OPENAPI_URL',
+                        url: additionalProps.url
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error parsing additional properties:', error);
+        }
+    };
+
+    /**
+     * Handle refetch definition button click
+     */
+    const handleRefetchDefinition = () => {
+        if (!sourceInfo.type || !sourceInfo.url) {
+            Alert.error(intl.formatMessage({
+                id: 'MCPServers.Details.Endpoints.refetch.no.source.error',
+                defaultMessage: 'No source URL found for this MCP Server. '
+                    + 'Refetch is only available for URL-based MCP Servers.',
+            }));
+            return;
+        }
+
+        setRefetchModal({
+            open: true,
+            isRefetching: true,
+            refetchedOperations: [],
+            refetchStrategy: 'replace',
+        });
+
+        // Call the refetch API
+        MCPServer.refetchMCPServerDefinition(apiObject.id, sourceInfo.type, sourceInfo.url)
+            .then((refetchResult) => {
+                setRefetchModal(prev => ({
+                    ...prev,
+                    isRefetching: false,
+                    refetchedOperations: refetchResult.operations || [],
+                }));
+
+                Alert.success(intl.formatMessage({
+                    id: 'MCPServers.Details.Endpoints.refetch.success',
+                    defaultMessage: 'Successfully refetched {count} operations from the source',
+                }, { count: refetchResult.operations?.length || 0 }));
+            })
+            .catch((error) => {
+                console.error('Error refetching definition:', error);
+                setRefetchModal(prev => ({
+                    ...prev,
+                    isRefetching: false,
+                    refetchedOperations: [],
+                }));
+
+                Alert.error(intl.formatMessage({
+                    id: 'MCPServers.Details.Endpoints.refetch.error',
+                    defaultMessage: 'Failed to refetch definition. '
+                        + 'Please check the source URL and try again.',
+                }));
+            });
+    };
+
+    /**
+     * Handle applying the refetched operations
+     */
+    const handleApplyRefetch = () => {
+        // Close the modal first
+        setRefetchModal({
+            open: false,
+            isRefetching: false,
+            refetchedOperations: [],
+            refetchStrategy: 'replace',
+        });
+
+        // Show success message
+        Alert.success(intl.formatMessage({
+            id: 'MCPServers.Details.Endpoints.refetch.applied.success',
+            defaultMessage: 'Tools/operations list has been updated. '
+                + 'Navigate to Tools page to see the changes.',
+        }));
+
+        // Optionally refresh the endpoints to reflect any backend changes
+        fetchEndpoints();
+    };
+
+    /**
+     * Handle closing the refetch modal without applying changes
+     */
+    const handleCloseRefetchModal = () => {
+        setRefetchModal({
+            open: false,
+            isRefetching: false,
+            refetchedOperations: [],
+            refetchStrategy: 'replace',
+        });
+    };
+
     useEffect(() => {
         fetchEndpoints();
+        detectSourceInfo();
     }, [apiObject.id]);
 
     const handleDelete = (endpointType, endpoint) => {
@@ -349,12 +482,39 @@ const Endpoints = ({
             </Grid>
             <Grid item xs={12}>
                 <StyledPaper elevation={0} variant='outlined'>
-                    <Typography variant='h5' component='h2' gutterBottom sx={{ mb: 3 }}>
-                        <FormattedMessage
-                            id='Apis.Details.Endpoints.AIEndpoints.AIEndpoints.general.config.header'
-                            defaultMessage='General Endpoint Configurations'
-                        />
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                        <Typography variant='h5' component='h2'>
+                            <FormattedMessage
+                                id='Apis.Details.Endpoints.AIEndpoints.AIEndpoints.general.config.header'
+                                defaultMessage='General Endpoint Configurations'
+                            />
+                        </Typography>
+                        {sourceInfo.type && sourceInfo.url && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip
+                                    label={`Source: ${sourceInfo.type}`}
+                                    size='small'
+                                    variant='outlined'
+                                />
+                                <Button
+                                    variant='outlined'
+                                    color='primary'
+                                    size='small'
+                                    startIcon={<RefreshIcon />}
+                                    disabled={isRestricted(
+                                        ['apim:mcp_server_create', 'apim:mcp_server_manage', 'apim:mcp_server_publish'],
+                                        apiObject) || refetchModal.isRefetching
+                                    }
+                                    onClick={handleRefetchDefinition}
+                                >
+                                    <FormattedMessage
+                                        id='MCPServers.Details.Endpoints.refetch.button'
+                                        defaultMessage='Refetch Definition'
+                                    />
+                                </Button>
+                            </Box>
+                        )}
+                    </Box>
                     <GeneralEndpointConfigurations endpointList={endpointList} />
                 </StyledPaper>
             </Grid>
@@ -379,7 +539,149 @@ const Endpoints = ({
                     />
                 </Button>
             </Grid>
-            
+
+            {/* Refetch Definition Modal */}
+            <Dialog
+                open={refetchModal.open}
+                onClose={handleCloseRefetchModal}
+                aria-labelledby='refetch-modal-title'
+                maxWidth='md'
+                fullWidth
+            >
+                <DialogTitle id='refetch-modal-title'>
+                    <FormattedMessage
+                        id='MCPServers.Details.Endpoints.refetch.modal.title'
+                        defaultMessage='Refetch Definition and Tools'
+                    />
+                </DialogTitle>
+                <DialogContent>
+                    {refetchModal.isRefetching ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+                            <CircularProgress size={24} sx={{ mr: 2 }} />
+                            <Typography>
+                                <FormattedMessage
+                                    id='MCPServers.Details.Endpoints.refetch.modal.fetching'
+                                    defaultMessage='Fetching latest definition from source...'
+                                />
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <Box>
+                            <Typography variant='body1' paragraph>
+                                <FormattedMessage
+                                    id='MCPServers.Details.Endpoints.refetch.modal.description'
+                                    defaultMessage={'The definition has been successfully refetched from the source. '
+                                        + 'Found {count} operations/tools.'}
+                                    values={{ count: refetchModal.refetchedOperations.length }}
+                                />
+                            </Typography>
+
+                            {refetchModal.refetchedOperations.length > 0 && (
+                                <Box sx={{ mb: 3 }}>
+                                    <Typography variant='subtitle1' gutterBottom>
+                                        <FormattedMessage
+                                            id='MCPServers.Details.Endpoints.refetch.modal.operations.title'
+                                            defaultMessage='Available Operations/Tools:'
+                                        />
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                        {refetchModal.refetchedOperations.map((operation) => (
+                                            <Chip
+                                                key={`${operation.target}-${operation.verb}`}
+                                                label={`${operation.target} (${operation.verb})`}
+                                                variant='outlined'
+                                                size='small'
+                                            />
+                                        ))}
+                                    </Box>
+                                </Box>
+                            )}
+
+                            <Typography variant='subtitle1' gutterBottom>
+                                <FormattedMessage
+                                    id='MCPServers.Details.Endpoints.refetch.modal.strategy.title'
+                                    defaultMessage='How would you like to handle the updated tools/operations?'
+                                />
+                            </Typography>
+                            <RadioGroup
+                                value={refetchModal.refetchStrategy}
+                                onChange={(e) => setRefetchModal(prev => ({
+                                    ...prev,
+                                    refetchStrategy: e.target.value
+                                }))}
+                            >
+                                <FormControlLabel
+                                    value='replace'
+                                    control={<Radio />}
+                                    label={
+                                        <Box>
+                                            <Typography variant='body2' fontWeight='medium'>
+                                                <FormattedMessage
+                                                    id={'MCPServers.Details.Endpoints.refetch.modal.'
+                                                        + 'strategy.replace.title'}
+                                                    defaultMessage='Replace existing tools/operations'
+                                                />
+                                            </Typography>
+                                            <Typography variant='caption' color='text.secondary'>
+                                                <FormattedMessage
+                                                    id={'MCPServers.Details.Endpoints.refetch.modal.'
+                                                        + 'strategy.replace.description'}
+                                                    defaultMessage={'All current tools will be replaced with '
+                                                        + 'the newly fetched operations.'}
+                                                />
+                                            </Typography>
+                                        </Box>
+                                    }
+                                />
+                                <FormControlLabel
+                                    value='keep'
+                                    control={<Radio />}
+                                    label={
+                                        <Box>
+                                            <Typography variant='body2' fontWeight='medium'>
+                                                <FormattedMessage
+                                                    id='MCPServers.Details.Endpoints.refetch.modal.strategy.keep.title'
+                                                    defaultMessage='Keep existing tools, add new ones'
+                                                />
+                                            </Typography>
+                                            <Typography variant='caption' color='text.secondary'>
+                                                <FormattedMessage
+                                                    id={'MCPServers.Details.Endpoints.refetch.modal.'
+                                                        + 'strategy.keep.description'}
+                                                    defaultMessage={'Existing tools will be preserved, '
+                                                        + 'and new operations will be added.'}
+                                                />
+                                            </Typography>
+                                        </Box>
+                                    }
+                                />
+                            </RadioGroup>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={handleCloseRefetchModal}
+                        disabled={refetchModal.isRefetching}
+                    >
+                        <FormattedMessage
+                            id='MCPServers.Details.Endpoints.refetch.modal.cancel'
+                            defaultMessage='Cancel'
+                        />
+                    </Button>
+                    <Button
+                        onClick={handleApplyRefetch}
+                        variant='contained'
+                        disabled={refetchModal.isRefetching || refetchModal.refetchedOperations.length === 0}
+                    >
+                        <FormattedMessage
+                            id='MCPServers.Details.Endpoints.refetch.modal.apply'
+                            defaultMessage='Apply Changes'
+                        />
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             {/* Delete Confirmation Dialog */}
             <Dialog
                 open={deleteConfirmation.open}

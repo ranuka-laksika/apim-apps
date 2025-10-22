@@ -1379,6 +1379,98 @@ class MCPServer extends Resource {
         });
         return promisePolicies.then(response => response.body);
     }
+
+    /**
+     * Refetch the definition and tools/operations list for an MCP Server.
+     * This method supports both OpenAPI-based MCP Servers and MCP Server Proxies.
+     * @param {string} mcpServerId - The ID of the MCP Server.
+     * @param {string} sourceType - The type of MCP Server ('OPENAPI_URL', 'OPENAPI_FILE', 'MCP_PROXY').
+     * @param {string} sourceUrl - The source URL for OpenAPI or MCP Proxy servers.
+     * @returns {Promise} A promise that resolves to the refetched definition and updated operations.
+     */
+    static refetchMCPServerDefinition(mcpServerId, sourceType, sourceUrl) {
+        let validationPromise;
+
+        switch (sourceType) {
+            case 'OPENAPI_URL':
+                // Use existing OpenAPI URL validation to refetch
+                validationPromise = this.validateOpenAPIByUrl(sourceUrl, { returnContent: true });
+                break;
+            case 'MCP_PROXY':
+                // Use existing MCP Server URL validation to refetch
+                validationPromise = this.validateThirdPartyMCPServerUrl(sourceUrl);
+                break;
+            default:
+                return Promise.reject(new Error(`Unsupported source type: ${sourceType}`));
+        }
+
+        return validationPromise.then(response => {
+            // Parse the response to extract the new definition and operations
+            const validationResult = response.body;
+
+            if (!validationResult || !validationResult.isValid) {
+                throw new Error('Failed to validate the refetched definition');
+            }
+
+            const newOperations = [];
+            const newDefinition = validationResult.content || validationResult.definition;
+
+            try {
+                // Parse operations based on source type
+                if (sourceType === 'OPENAPI_URL') {
+                    // For OpenAPI, extract operations from paths
+                    if (validationResult.content) {
+                        const apiDef = typeof validationResult.content === 'string'
+                            ? JSON.parse(validationResult.content)
+                            : validationResult.content;
+
+                        if (apiDef.paths) {
+                            Object.entries(apiDef.paths).forEach(([path, pathObj]) => {
+                                Object.entries(pathObj).forEach(([verb, operation]) => {
+                                    if (['get', 'post', 'put', 'patch', 'delete'].includes(verb.toLowerCase())) {
+                                        newOperations.push({
+                                            target: path,
+                                            verb: verb.toUpperCase(),
+                                            summary: operation.summary || `${verb.toUpperCase()} ${path}`,
+                                            description: operation.description || ''
+                                        });
+                                    }
+                                });
+                            });
+                        }
+                    }
+                } else if (sourceType === 'MCP_PROXY') {
+                    // For MCP Proxy, extract tools from definition
+                    if (validationResult.definition) {
+                        const mcpDef = typeof validationResult.definition === 'string'
+                            ? JSON.parse(validationResult.definition)
+                            : validationResult.definition;
+
+                        if (mcpDef.tools && Array.isArray(mcpDef.tools)) {
+                            mcpDef.tools.forEach(tool => {
+                                newOperations.push({
+                                    target: tool.name,
+                                    verb: 'TOOL',
+                                    summary: tool.name,
+                                    description: tool.description || ''
+                                });
+                            });
+                        }
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing refetched definition:', parseError);
+            }
+
+            return {
+                definition: newDefinition,
+                operations: newOperations,
+                isValid: validationResult.isValid,
+                sourceType,
+                sourceUrl
+            };
+        });
+    }
 }
 
 export default MCPServer;
