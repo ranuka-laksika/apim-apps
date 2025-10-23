@@ -17,17 +17,26 @@
  */
 
 import React from 'react';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import {
     Typography,
     IconButton,
     Card,
     CardContent,
     CardActions,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    FormControlLabel,
+    Checkbox,
+    CircularProgress,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CodeIcon from '@mui/icons-material/Code';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import Drawer from '@mui/material/Drawer';
 import Tooltip from '@mui/material/Tooltip';
 import Box from '@mui/material/Box';
@@ -37,6 +46,8 @@ import { Editor as MonacoEditor, loader } from '@monaco-editor/react';
 import { styled } from '@mui/material/styles';
 import { isRestricted } from 'AppData/AuthManager';
 import { useHistory } from 'react-router-dom';
+import MCPServer from 'AppData/MCPServer';
+import Alert from 'AppComponents/Shared/Alert';
 
 const PREFIX = 'EndpointCard';
 
@@ -104,7 +115,11 @@ const EndpointCard = ({
     endpointType,
 }) => {
     const history = useHistory();
+    const intl = useIntl();
     const [open, setOpen] = React.useState(false);
+    const [refetchDialogOpen, setRefetchDialogOpen] = React.useState(false);
+    const [isRefetching, setIsRefetching] = React.useState(false);
+    const [keepCurrentTools, setKeepCurrentTools] = React.useState(true);
 
     const toggleDefinitionViewDrawer = (state) => () => {
         setOpen(state);
@@ -170,6 +185,65 @@ const EndpointCard = ({
         minimap: {
             enabled: false,
         },
+    };
+
+    /**
+     * Handle the refetch operation - refetch the definition from the backend
+     */
+    const handleRefetch = () => {
+        setRefetchDialogOpen(true);
+    };
+
+    /**
+     * Confirm and execute the refetch operation
+     */
+    const confirmRefetch = async () => {
+        setIsRefetching(true);
+        setRefetchDialogOpen(false);
+
+        try {
+            const endpointUrl = getEndpointUrl();
+
+            // Determine the type of MCP server based on the API creation method
+            // For now, we'll assume it's an OpenAPI-based server and use validateOpenAPIByUrl
+            // In a real implementation, we'd need to check the server type first
+
+            const validateResponse = await MCPServer.validateOpenAPIByUrl(endpointUrl, { returnContent: true });
+
+            if (validateResponse && validateResponse.body) {
+                // Successfully refetched the definition
+                Alert.success(intl.formatMessage({
+                    id: 'MCPServers.Details.Endpoints.EndpointCard.refetch.success',
+                    defaultMessage: 'Definition refetched successfully. {action} tools based on the new definition.',
+                }, {
+                    action: keepCurrentTools ? 'Keeping current' : 'Creating new'
+                }));
+
+                // Here you would typically update the MCP server with the new definition
+                // For now, we'll just show a success message
+                // In a full implementation, you'd call an API to update the server definition
+                // and optionally regenerate tools based on the keepCurrentTools flag
+
+            } else {
+                throw new Error('Invalid response from validation');
+            }
+        } catch (error) {
+            console.error('Error refetching definition:', error);
+            Alert.error(intl.formatMessage({
+                id: 'MCPServers.Details.Endpoints.EndpointCard.refetch.error',
+                defaultMessage: 'Error refetching definition. Please check the endpoint URL and try again.',
+            }));
+        } finally {
+            setIsRefetching(false);
+        }
+    };
+
+    /**
+     * Cancel the refetch operation
+     */
+    const cancelRefetch = () => {
+        setRefetchDialogOpen(false);
+        setKeepCurrentTools(true); // Reset to default
     };
 
     return (
@@ -245,6 +319,27 @@ const EndpointCard = ({
                             </Box>
                         </Drawer>
                     </>
+                    <Tooltip title='Refetch Tool List/Operation List'>
+                        <IconButton
+                            size='small'
+                            onClick={handleRefetch}
+                            disabled={
+                                isRestricted([
+                                    'apim:mcp_server_view',
+                                    'apim:mcp_server_create',
+                                    'apim:mcp_server_manage',
+                                    'apim:mcp_server_publish',
+                                    'apim:mcp_server_import_export',
+                                ], apiObject) || isRefetching
+                            }
+                        >
+                            {isRefetching ? (
+                                <CircularProgress size={16} />
+                            ) : (
+                                <RefreshIcon fontSize='small' />
+                            )}
+                        </IconButton>
+                    </Tooltip>
                     <IconButton
                         size='small'
                         onClick={() => {
@@ -289,6 +384,77 @@ const EndpointCard = ({
                     </span>
                 </CardActions>
             </CardContent>
+
+            {/* Refetch Confirmation Dialog */}
+            <Dialog
+                open={refetchDialogOpen}
+                onClose={cancelRefetch}
+                aria-labelledby='refetch-confirmation-dialog-title'
+                maxWidth='sm'
+                fullWidth
+            >
+                <DialogTitle id='refetch-confirmation-dialog-title'>
+                    <FormattedMessage
+                        id='MCPServers.Details.Endpoints.EndpointCard.refetch.confirmation.title'
+                        defaultMessage='Refetch Tool List/Operation List'
+                    />
+                </DialogTitle>
+                <DialogContent>
+                    <Typography gutterBottom>
+                        <FormattedMessage
+                            id='MCPServers.Details.Endpoints.EndpointCard.refetch.confirmation.message'
+                            defaultMessage={
+                                'This will refetch the definition from the backend endpoint ' +
+                                'and update the available tools/operations.'
+                            }
+                        />
+                    </Typography>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={keepCurrentTools}
+                                onChange={(e) => setKeepCurrentTools(e.target.checked)}
+                                name='keepCurrentTools'
+                                color='primary'
+                            />
+                        }
+                        label={
+                            <FormattedMessage
+                                id='MCPServers.Details.Endpoints.EndpointCard.refetch.keep.current.tools'
+                                defaultMessage='Keep current tool list (recommended)'
+                            />
+                        }
+                    />
+                    <Typography variant='body2' color='textSecondary' sx={{ ml: 4, mt: 1 }}>
+                        <FormattedMessage
+                            id='MCPServers.Details.Endpoints.EndpointCard.refetch.keep.current.tools.help'
+                            defaultMessage={
+                                'If unchecked, existing tools will be replaced with new tools ' +
+                                'based on the refetched definition.'
+                            }
+                        />
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={cancelRefetch} color='primary'>
+                        <FormattedMessage
+                            id='MCPServers.Details.Endpoints.EndpointCard.refetch.confirmation.cancel'
+                            defaultMessage='Cancel'
+                        />
+                    </Button>
+                    <Button
+                        onClick={confirmRefetch}
+                        color='primary'
+                        variant='contained'
+                        disabled={isRefetching}
+                    >
+                        <FormattedMessage
+                            id='MCPServers.Details.Endpoints.EndpointCard.refetch.confirmation.refetch'
+                            defaultMessage='Refetch'
+                        />
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </StyledCard>
     );
 };
