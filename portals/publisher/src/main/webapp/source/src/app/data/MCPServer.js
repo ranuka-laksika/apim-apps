@@ -871,6 +871,29 @@ class MCPServer extends Resource {
     }
 
     /**
+     * Refetch the definition of an MCP Server endpoint from its original source
+     * @param {string} mcpServerId - The ID of the MCP Server
+     * @param {string} backendId - The ID of the backend/endpoint to refetch
+     * @returns {Promise} A promise that resolves to the refetched definition
+     */
+    static refetchMCPServerDefinition(mcpServerId, backendId) {
+        const apiClient = new APIClientFactory()
+            .getAPIClient(
+                Utils.getCurrentEnvironment(),
+                Utils.CONST.API_CLIENT
+            ).client;
+        return apiClient.then(client => {
+            return client.apis['MCP Server Backends'].refetchMCPServerBackendDefinition(
+                {
+                    mcpServerId,
+                    backendId,
+                },
+                this._requestMetaData(),
+            );
+        });
+    }
+
+    /**
      * Validate if a document exists in an MCP Server
      * @param {string} id - The ID of the MCP Server
      * @param {string} name - The name of the document
