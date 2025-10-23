@@ -291,7 +291,7 @@ class TableView extends React.Component {
     };
 
     /**
-     * Fetch list data without updating the total count (used after deletion)
+     * Fetch list data and update the total count (used after deletion)
      * @param {number} rowsPerPage Number of rows per page
      * @param {number} page Current page number
      * @returns {Promise} Promise that resolves when data is fetched
@@ -302,9 +302,11 @@ class TableView extends React.Component {
         this.setState({ loading: true });
         return this.xhrRequest(rowsPerPage, page).then((data) => {
             const { body } = data;
-            const { list } = body;
+            const { list, pagination } = body;
+            const { total } = pagination;
             this.setState({
                 apisAndApiProducts: list,
+                totalCount: total,
                 notFound: false,
                 rowsPerPage,
                 page,
@@ -327,14 +329,12 @@ class TableView extends React.Component {
      */
     updateData() {
         const { rowsPerPage, page, totalCount } = this.state;
-        // Immediately decrement the total count for instant UI feedback
-        this.setState({ totalCount: Math.max(0, totalCount - 1) });
 
         let newPage = page;
         if (totalCount - 1 === rowsPerPage * page && page !== 0) {
             newPage = page - 1;
         }
-        // Fetch fresh list data without overwriting the decremented count
+        // Fetch fresh list data and update the count from server
         setTimeout(() => {
             this.getDataListOnly(rowsPerPage, newPage);
         }, 1000);
