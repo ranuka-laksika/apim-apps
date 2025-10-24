@@ -1,0 +1,178 @@
+name: Claude Code • Auto PR on Comment
+
+on:
+  issue_comment:
+    types: [created]
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: doc-fixing-ai-agent
+  cancel-in-progress: false
+
+jobs:
+  run_claude:
+    runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '@wso2-engineering-bot')
+
+    steps:
+      - name: Checkout original repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.DOC_FIXING_AGENT_GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'  
+          java-version: '11'
+
+      - name: Verify Java installation
+        run: |
+          echo "Java version:"
+          java -version
+          echo "Maven version:"
+          mvn --version
+
+      - name: Set up Maven 3.6.3
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+          mvn --version
+
+      - name: Set up Node.js (latest)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'   # install latest LTS version    
+
+      - name: Verify Node installation
+        run: |
+          node --version
+          npm --version
+          
+      - name: Check tool installation paths
+        run: |
+          echo "===== JAVA ====="
+          echo "JAVA_HOME: $JAVA_HOME"
+          which java
+          java -version
+
+          echo ""
+          echo "===== MAVEN ====="
+          echo "MAVEN_HOME: $MAVEN_HOME"
+          which mvn
+          mvn --version
+
+          echo ""
+          echo "===== NODE ====="
+          echo "NODE_PATH: $NODE_PATH"
+          which node
+          which npm
+          node --version
+          npm --version
+
+      - name: Download WSO2AM 4.5.0 Pack
+        run: |
+          echo "Downloading wso2am-4.5.0.zip from GitHub release..."
+          wget -q https://github.com/ranuka-laksika/api-manager/releases/download/v4.5.0/wso2am-4.5.0.zip -O wso2am-4.5.0.zip
+          echo "Extracting the pack..."
+          unzip -q wso2am-4.5.0.zip -d wso2am-4.5.0
+          ls -l wso2am-4.5.0
+
+      - name: Configure Git for commits
+        run: |
+          git config user.name ${{secrets.DOC_FIXING_AGENT_GIT_USER_NAME}}
+          git config user.email ${{secrets.DOC_FIXING_AGENT_GIT_USER_EMAIL}}
+
+      - name: Set environment variables
+        run: |
+          echo "PATH=/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.28-6/x64/bin:/usr/share/maven/bin:/opt/hostedtoolcache/node/18.20.8/x64/bin:/usr/local/bin:/usr/bin:/bin" >> $GITHUB_ENV
+          echo "JAVA_HOME=/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/11.0.28-6/x64" >> $GITHUB_ENV
+          echo "MAVEN_HOME=/usr/share/maven" >> $GITHUB_ENV
+          echo "NODE_PATH=/opt/hostedtoolcache/node/18.20.8/x64/bin" >> $GITHUB_ENV
+
+      - name: Prepare system prompt with environment variables
+        id: prepare_prompt
+        run: |
+          if ! command -v envsubst &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y gettext-base
+          fi
+
+          export ISSUE_NUMBER="${{ github.event.issue.number }}"
+          export REPOSITORY="${{ vars.DOC_FIXING_AGENT_REPOSITORY }}"
+          export JAVA_HOME="${{ env.JAVA_HOME }}"
+          export MAVEN_HOME="${{ env.MAVEN_HOME }}"
+          export NODE_PATH="${{ env.NODE_PATH }}"
+
+          SYSTEM_PROMPT=$(envsubst < ${{github.workspace}}/.github/claude/system_prompt_update.txt)
+
+          echo "SYSTEM_PROMPT<<EOF" >> $GITHUB_ENV
+          echo "$SYSTEM_PROMPT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
+          echo "REPOSITORY=$REPOSITORY" >> $GITHUB_ENV
+
+      - name: Run Claude (with environment persistence)
+        id: run_claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          PATH: ${{ env.PATH }}
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+          MAVEN_HOME: ${{ env.MAVEN_HOME }}
+          NODE_PATH: ${{ env.NODE_PATH }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ vars.DOC_FIXING_AGENT_REPOSITORY }}
+        with:
+          anthropic_api_key: ${{ secrets.DOC_FIXING_AGENT_ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.DOC_FIXING_AGENT_GITHUB_TOKEN }}
+          prompt: ${{ env.SYSTEM_PROMPT }}
+          trigger_phrase: "@wso2-engineering-bot"
+          claude_args: |
+            --allowedTools "Bash(*),Bash(sudo apt:*),,Bash(zip:*),Bash(apt:*),Bash(cp:*),Bash(java:*),Bash(npm:*),Bash(shell:*),Bash(node:*),Bash(mvn:*),Bash(mkdir:*),Bash(cd:*),Bash(ls:*),Bash(unzip:*),Bash(wget:*),Bash(git:*),Bash(mkdocs:*),Bash(python3:*),Bash(pip3:*),WebFetch,mcp__github__create_pull_request,mcp__github__get_issue,mcp__github__search_pull_requests,mcp__github__list_branches,Edit,Read,Write,mcp__github__update_issue,mcp__github__create_branch,mcp__github__add_issue_comment"
+            --model claude-sonnet-4-20250514
+      - name: Check file location of wso2am-4.5.0
+        run: |
+          echo "Listing contents of workspace:"
+          ls -l $GITHUB_WORKSPACE
+          echo "Listing contents of wso2am-4.5.0 directory:"
+          ls -l $GITHUB_WORKSPACE/wso2am-4.5.0
+
+      - name: Upload artifact pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-artifact
+          path: ${{ github.workspace }}/wso2am-4.5.0.zip
+
+      - name: Get next queued issue
+        id: get_next_queued
+        env:
+          GITHUB_TOKEN: ${{ secrets.DOC_FIXING_AGENT_GITHUB_TOKEN }}
+        run: |
+          ISSUE_JSON=$(gh issue list --label "AI-Agent/Queued" --state open --json number,createdAt --limit 100 \
+            | jq '[.[]] | sort_by(.createdAt) | .[0]')
+          if [ "$ISSUE_JSON" = "null" ] || [ -z "$ISSUE_JSON" ]; then
+            echo "next_issue_number=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          NEXT_ISSUE_NUMBER=$(echo "$ISSUE_JSON" | jq -r .number)
+          echo "next_issue_number=$NEXT_ISSUE_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Exit if no queued issues
+        if: steps.get_next_queued.outputs.next_issue_number == ''
+        run: |
+          echo "No queued issues."
+          exit 0
+
+      - name: Update labels and trigger Claude
+        env:
+          GITHUB_TOKEN: ${{ secrets.DOC_FIXING_AGENT_GITHUB_TOKEN }}
+        if: steps.get_next_queued.outputs.next_issue_number != ''
+        run: |
+          ISSUE=${{ steps.get_next_queued.outputs.next_issue_number }}
+
+          gh issue edit $ISSUE --remove-label "AI-Agent/Queued"
+          gh issue edit $ISSUE --add-label "AI-Agent/In-Progress"
+          gh issue comment $ISSUE --body "@wso2-engineering-bot create a PR for this issue following repo conventions"
