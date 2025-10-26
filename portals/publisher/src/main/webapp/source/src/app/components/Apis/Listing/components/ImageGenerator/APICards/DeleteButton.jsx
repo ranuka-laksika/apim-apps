@@ -195,6 +195,8 @@ class DeleteApiButton extends React.Component {
                     updateData(id);
                     setLoading(false);
                 } else {
+                    // Set flag to refresh API listing when returning from overview page deletion
+                    localStorage.setItem('api-listing-needs-refresh', 'true');
                     history.push(redirectPath);
                 }
             })

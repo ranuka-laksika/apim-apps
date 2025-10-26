@@ -110,6 +110,16 @@ class TableView extends React.Component {
         if (userRowsPerPage) {
             this.setState({ rowsPerPage: userRowsPerPage });
         }
+
+        // Check if we need to refresh data after returning from overview deletion
+        const needsRefresh = localStorage.getItem('api-listing-needs-refresh');
+        if (needsRefresh) {
+            localStorage.removeItem('api-listing-needs-refresh');
+            // Small delay to ensure backend is consistent after deletion
+            setTimeout(() => {
+                this.getData(rowsPerPage, page);
+            }, 500);
+        }
     }
 
     /**
