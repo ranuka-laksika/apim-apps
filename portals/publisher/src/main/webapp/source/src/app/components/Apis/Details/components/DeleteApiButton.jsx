@@ -169,6 +169,8 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
+                        // Set flag to indicate API Product was deleted from overview page
+                        sessionStorage.setItem('apiDeletedFromOverview', 'true');
                         history.push('/api-products');
                     }
                 })
@@ -205,6 +207,8 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
+                        // Set flag to indicate MCP Server was deleted from overview page
+                        sessionStorage.setItem('apiDeletedFromOverview', 'true');
                         history.push('/mcp-servers');
                     }
                 })
@@ -241,6 +245,8 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
+                        // Set flag to indicate API was deleted from overview page
+                        sessionStorage.setItem('apiDeletedFromOverview', 'true');
                         history.push('/apis');
                     }
                 })

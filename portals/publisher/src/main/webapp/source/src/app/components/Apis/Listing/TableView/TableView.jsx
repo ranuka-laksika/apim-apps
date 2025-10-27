@@ -110,6 +110,15 @@ class TableView extends React.Component {
         if (userRowsPerPage) {
             this.setState({ rowsPerPage: userRowsPerPage });
         }
+
+        // Check if API was deleted from overview page and update count
+        if (sessionStorage.getItem('apiDeletedFromOverview') === 'true') {
+            sessionStorage.removeItem('apiDeletedFromOverview');
+            // Wait a moment for initial data load, then update
+            setTimeout(() => {
+                this.updateData();
+            }, 500);
+        }
     }
 
     /**
