@@ -82,8 +82,27 @@ const DataTable = ({ data, type, totalCount, onDelete, isAPIProduct, isMCPServer
 
             {/* View All section - only show if there are more items than displayed */}
             {totalCount > data.length && (
-                <Box mt={2}>
-                    <Button variant='text' color='primary' component={Link} to={getViewAllPath()}>
+                <Box mt={3} display='flex' justifyContent='center'>
+                    <Button
+                        variant='contained'
+                        color='primary'
+                        component={Link}
+                        to={getViewAllPath()}
+                        size='large'
+                        sx={{
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            px: 4,
+                            py: 1.5,
+                            boxShadow: 3,
+                            '&:hover': {
+                                boxShadow: 6,
+                                transform: 'translateY(-1px)',
+                            },
+                            transition: 'all 0.3s ease-in-out',
+                        }}
+                    >
                         <FormattedMessage
                             id='Publisher.Landing.view.all.button'
                             defaultMessage='View All {entityType}'
