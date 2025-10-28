@@ -17,10 +17,11 @@
  */
 
 import React from 'react';
-import { Box, Grid, Button } from '@mui/material';
+import { Box, Grid, Card, CardContent, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ApiThumb from 'AppComponents/Apis/Listing/components/ImageGenerator/ApiThumb';
 import CONSTS from 'AppData/Constants';
 
@@ -80,18 +81,66 @@ const DataTable = ({ data, type, totalCount, onDelete, isAPIProduct, isMCPServer
                 })}
             </Grid>
 
-            {/* View All section - only show if there are more items than displayed */}
+            {/* Prominent View All Card - only show if there are more items than displayed */}
             {totalCount > data.length && (
                 <Box mt={2}>
-                    <Button variant='text' color='primary' component={Link} to={getViewAllPath()}>
-                        <FormattedMessage
-                            id='Publisher.Landing.view.all.button'
-                            defaultMessage='View All {entityType}'
-                            values={{
-                                entityType: getEntityLabel(),
-                            }}
-                        />
-                    </Button>
+                    <Card
+                        component={Link}
+                        to={getViewAllPath()}
+                        sx={{
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            border: '2px dashed',
+                            borderColor: 'primary.main',
+                            backgroundColor: 'primary.light',
+                            opacity: 0.8,
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                                opacity: 1,
+                                transform: 'translateY(-2px)',
+                                boxShadow: 2,
+                                borderColor: 'primary.dark',
+                            },
+                            minHeight: '120px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                            <ArrowForwardIcon
+                                color='primary'
+                                sx={{ fontSize: 32, mb: 1 }}
+                            />
+                            <Typography
+                                variant='h6'
+                                color='primary.dark'
+                                fontWeight='600'
+                            >
+                                <FormattedMessage
+                                    id='Publisher.Landing.view.all.button'
+                                    defaultMessage='View All {entityType}'
+                                    values={{
+                                        entityType: getEntityLabel(),
+                                    }}
+                                />
+                            </Typography>
+                            <Typography
+                                variant='caption'
+                                color='text.secondary'
+                                sx={{ mt: 0.5, display: 'block' }}
+                            >
+                                <FormattedMessage
+                                    id='Publisher.Landing.view.all.subtitle'
+                                    defaultMessage='{count} more {entityType} available'
+                                    values={{
+                                        count: totalCount - data.length,
+                                        entityType: getEntityLabel().toLowerCase(),
+                                    }}
+                                />
+                            </Typography>
+                        </CardContent>
+                    </Card>
                 </Box>
             )}
         </>

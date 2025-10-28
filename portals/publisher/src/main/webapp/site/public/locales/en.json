@@ -2321,6 +2321,7 @@
   "Publisher.Landing.summary.mcpServers": "MCP Servers",
   "Publisher.Landing.title": "Welcome to the {portal}!",
   "Publisher.Landing.view.all.button": "View All {entityType}",
+  "Publisher.Landing.view.all.subtitle": "{count} more {entityType} available",
   "Request.Details.Policies.PolicyList.Title": "Request",
   "Response.Details.Policies.PolicyList.Title": "Response",
   "Scopes.Create.CreateScope.cancel": "Cancel",
