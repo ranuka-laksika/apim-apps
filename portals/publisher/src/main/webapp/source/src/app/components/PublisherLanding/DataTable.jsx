@@ -21,6 +21,7 @@ import { Box, Grid, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ApiThumb from 'AppComponents/Apis/Listing/components/ImageGenerator/ApiThumb';
 import CONSTS from 'AppData/Constants';
 
@@ -82,8 +83,32 @@ const DataTable = ({ data, type, totalCount, onDelete, isAPIProduct, isMCPServer
 
             {/* View All section - only show if there are more items than displayed */}
             {totalCount > data.length && (
-                <Box mt={2}>
-                    <Button variant='text' color='primary' component={Link} to={getViewAllPath()}>
+                <Box
+                    mt={3}
+                    display='flex'
+                    justifyContent='center'
+                    alignItems='center'
+                >
+                    <Button
+                        variant='outlined'
+                        color='primary'
+                        component={Link}
+                        to={getViewAllPath()}
+                        size='large'
+                        endIcon={<ArrowForwardIcon />}
+                        sx={{
+                            minWidth: 180,
+                            borderWidth: 2,
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            '&:hover': {
+                                borderWidth: 2,
+                                backgroundColor: 'primary.main',
+                                color: 'white',
+                            }
+                        }}
+                    >
                         <FormattedMessage
                             id='Publisher.Landing.view.all.button'
                             defaultMessage='View All {entityType}'
