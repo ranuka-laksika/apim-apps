@@ -841,7 +841,7 @@ class Details extends Component {
             settings,
             isSettingsLoading,
             location: pageLocation,
-            location: { pathname }, // nested destructuring
+            location: { pathname, state }, // nested destructuring
         } = this.props;
 
         // pageLocation renaming is to prevent es-lint errors saying can't use global name location
@@ -1105,6 +1105,7 @@ class Details extends Component {
                                 isAPIProduct={isAPIProduct}
                                 imageUpdate={imageUpdate}
                                 updateAPI={this.updateAPI}
+                                updateData={state && state.updateData}
                             />
                             <div className={classes.contentInside}>
                                 <LastUpdatedTime lastUpdatedTime={api.lastUpdatedTimestamp} />

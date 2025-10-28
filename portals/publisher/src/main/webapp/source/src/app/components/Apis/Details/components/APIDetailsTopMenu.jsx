@@ -162,7 +162,7 @@ const Root = styled('div')(({ theme }) => ({
 
 const APIDetailsTopMenu = (props) => {
     const {
-        api, isAPIProduct, imageUpdate, intl, openPageSearch, setOpenPageSearch, updateAPI
+        api, isAPIProduct, imageUpdate, intl, openPageSearch, setOpenPageSearch, updateAPI, updateData
     } = props;
     const theme = useTheme();
     const history = useHistory();
@@ -680,6 +680,7 @@ const APIDetailsTopMenu = (props) => {
                             buttonClass={classes.viewInStoreLauncher}
                             api={api}
                             isAPIProduct={isAPIProduct}
+                            updateData={updateData}
                         />
                     )
                 }

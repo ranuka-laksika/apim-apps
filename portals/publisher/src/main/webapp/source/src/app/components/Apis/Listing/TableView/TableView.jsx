@@ -376,13 +376,19 @@ class TableView extends React.Component {
                             const apiId = tableMeta.rowData[0];
                             if (isAPIProduct) {
                                 return (
-                                    <Link to={'/api-products/' + apiId + '/overview'}>
+                                    <Link to={{
+                                        pathname: '/api-products/' + apiId + '/overview',
+                                        state: { updateData: tableViewObj.updateData }
+                                    }}>
                                         <span>{displayName || apiName}</span>
                                     </Link>
                                 );
                             } else if (isMCPServer) {
                                 return (
-                                    <Link to={'/mcp-servers/' + apiId + '/overview'}>
+                                    <Link to={{
+                                        pathname: '/mcp-servers/' + apiId + '/overview',
+                                        state: { updateData: tableViewObj.updateData }
+                                    }}>
                                         <span>{displayName || apiName}</span>
                                     </Link>
                                 );
@@ -420,7 +426,10 @@ class TableView extends React.Component {
                                     );
                                 }
                                 return (
-                                    <Link to={urlPrefix + apiId + '/overview'}>
+                                    <Link to={{
+                                        pathname: urlPrefix + apiId + '/overview',
+                                        state: { updateData: tableViewObj.updateData }
+                                    }}>
                                         <span>{displayName || apiName}</span>
                                     </Link>
                                 );
