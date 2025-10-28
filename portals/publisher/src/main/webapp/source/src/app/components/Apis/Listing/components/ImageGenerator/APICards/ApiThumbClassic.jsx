@@ -64,7 +64,33 @@ const classes = {
 
 const StyledCard = styled(Card)(({ theme, useFlexibleWidth }) => ({
     [`&.${classes.card}`]: {
-        ...(useFlexibleWidth ? {} : { width: '300px', margin: theme.spacing(1) }),
+        ...(useFlexibleWidth
+            ? {}
+            : {
+                // Responsive width: full width on small screens, fixed on larger screens
+                width: '100%',
+                maxWidth: '300px',
+                minWidth: '280px',
+                margin: theme.spacing(1),
+                // Responsive breakpoints for better card sizing
+                [theme.breakpoints.down('sm')]: {
+                    width: '100%',
+                    maxWidth: 'none',
+                    minWidth: '280px',
+                },
+                [theme.breakpoints.up('sm')]: {
+                    width: 'calc(50% - 16px)',
+                    maxWidth: '300px',
+                },
+                [theme.breakpoints.up('md')]: {
+                    width: 'calc(33.333% - 16px)',
+                    maxWidth: '300px',
+                },
+                [theme.breakpoints.up('lg')]: {
+                    width: '300px',
+                },
+            }
+        ),
         borderRadius: theme.spacing(1),
         transition: 'box-shadow 0.3s ease-in-out',
         height: 'fit-content',
