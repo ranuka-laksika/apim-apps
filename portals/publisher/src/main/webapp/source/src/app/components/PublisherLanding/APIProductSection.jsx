@@ -116,6 +116,23 @@ const APIProductSection = ({ data, totalCount, onDelete }) => {
                                 defaultMessage='API Products'
                             />
                         </Typography>
+                        {/* Prominent View All API Products link when there are more than 5 */}
+                        {totalCount > data.length && (
+                            <Button
+                                variant='outlined'
+                                color='primary'
+                                component={Link}
+                                to='/api-products'
+                                size='small'
+                                sx={{ ml: 2, fontWeight: 600 }}
+                            >
+                                <FormattedMessage
+                                    id='Publisher.Landing.view.all.api.products.prominent'
+                                    defaultMessage='View All {count} API Products'
+                                    values={{ count: totalCount }}
+                                />
+                            </Button>
+                        )}
                     </div>
                     <Button
                         variant='contained'

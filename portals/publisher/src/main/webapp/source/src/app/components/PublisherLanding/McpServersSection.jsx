@@ -116,6 +116,23 @@ const McpServersSection = ({ data, totalCount, onDelete }) => {
                                 defaultMessage='MCP Servers'
                             />
                         </Typography>
+                        {/* Prominent View All MCP Servers link when there are more than 5 */}
+                        {totalCount > data.length && (
+                            <Button
+                                variant='outlined'
+                                color='primary'
+                                component={Link}
+                                to='/mcp-servers'
+                                size='small'
+                                sx={{ ml: 2, fontWeight: 600 }}
+                            >
+                                <FormattedMessage
+                                    id='Publisher.Landing.view.all.mcpServers.prominent'
+                                    defaultMessage='View All {count} MCP Servers'
+                                    values={{ count: totalCount }}
+                                />
+                            </Button>
+                        )}
                     </div>
                     <Button
                         variant='contained'
