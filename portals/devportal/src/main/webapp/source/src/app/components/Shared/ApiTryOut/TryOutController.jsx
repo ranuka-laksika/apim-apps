@@ -255,8 +255,9 @@ function TryOutController(props) {
                     }
                 });
             }
-            const promiseSubscriptions = restApi.getSubscriptions(apiID);
-            promiseSubscriptions.then((subscriptionsResponse) => {
+            if (!isSubValidationDisabled) {
+                const promiseSubscriptions = restApi.getSubscriptions(apiID);
+                promiseSubscriptions.then((subscriptionsResponse) => {
                 if (subscriptionsResponse !== null) {
                     subscriptionsList = subscriptionsResponse.obj.list.filter((item) => item.status === 'UNBLOCKED'
                         || item.status === 'PROD_ONLY_BLOCKED' || item.status === 'TIER_UPDATE_PENDING');
@@ -321,6 +322,7 @@ function TryOutController(props) {
                     setNotFound(true);
                 }
             });
+            }
             const promisedKeyManagers = restApi.getKeyManagers();
             promisedKeyManagers
                 .then((response) => {
