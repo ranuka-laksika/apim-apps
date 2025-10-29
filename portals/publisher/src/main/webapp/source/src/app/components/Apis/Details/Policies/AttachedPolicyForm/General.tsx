@@ -46,6 +46,101 @@ import ModelRoundRobin from '../CustomPolicies/ModelRoundRobin';
 import ModelWeightedRoundRobin from '../CustomPolicies/ModelWeightedRoundRobin';
 import ModelFailover from '../CustomPolicies/ModelFailover';
 import { Editor } from '@monaco-editor/react';
+import { useAPI } from 'AppComponents/Apis/Details/components/ApiContext';
+
+/**
+ * Validates if a JSONPath expression is applicable to the given OpenAPI schema
+ * @param {string} jsonPath - The JSONPath expression to validate
+ * @param {any} openAPISpec - The OpenAPI specification object
+ * @returns {boolean} - True if JSONPath is valid for the schema, false otherwise
+ */
+const validateJSONPathAgainstSchema = (jsonPath: string, openAPISpec: any): boolean => {
+    if (!jsonPath || !openAPISpec) {
+        return true; // Skip validation if either is missing
+    }
+
+    try {
+        // Basic JSONPath syntax validation
+        if (!jsonPath.startsWith('$')) {
+            return false; // JSONPath expressions should start with '$'
+        }
+
+        // Extract schema components that JSONPath might reference
+        const schemaPaths = new Set<string>();
+
+        // Add common schema paths from OpenAPI spec
+        if (openAPISpec.components && openAPISpec.components.schemas) {
+            Object.keys(openAPISpec.components.schemas).forEach(schemaName => {
+                const schema = openAPISpec.components.schemas[schemaName];
+                if (schema.properties) {
+                    Object.keys(schema.properties).forEach(propName => {
+                        schemaPaths.add(propName);
+                        // Add nested properties for common patterns
+                        if (schema.properties[propName].properties) {
+                            Object.keys(schema.properties[propName].properties).forEach(nestedProp => {
+                                schemaPaths.add(`${propName}.${nestedProp}`);
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // Add paths from API operations (request/response schemas)
+        if (openAPISpec.paths) {
+            Object.values(openAPISpec.paths).forEach((pathItem: any) => {
+                Object.values(pathItem).forEach((operation: any) => {
+                    if (operation.requestBody && operation.requestBody.content) {
+                        Object.values(operation.requestBody.content).forEach((mediaType: any) => {
+                            if (mediaType.schema && mediaType.schema.properties) {
+                                Object.keys(mediaType.schema.properties).forEach(propName => {
+                                    schemaPaths.add(propName);
+                                });
+                            }
+                        });
+                    }
+                    if (operation.responses) {
+                        Object.values(operation.responses).forEach((response: any) => {
+                            if (response.content) {
+                                Object.values(response.content).forEach((mediaType: any) => {
+                                    if (mediaType.schema && mediaType.schema.properties) {
+                                        Object.keys(mediaType.schema.properties).forEach(propName => {
+                                            schemaPaths.add(propName);
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        // Common AI/LLM payload structures
+        const commonPaths = [
+            'messages', 'content', 'prompt', 'text', 'data', 'input', 'output',
+            'response', 'request', 'payload', 'body', 'result', 'message'
+        ];
+        commonPaths.forEach(path => schemaPaths.add(path));
+
+        // Simple JSONPath validation - check if referenced properties exist in schema
+        const pathParts = jsonPath.substring(2).split('.').filter(part =>
+            part && !part.includes('[') && !part.includes(']') && !part.includes('*')
+        );
+
+        if (pathParts.length === 0) {
+            return true; // Root path '$' is always valid
+        }
+
+        // Check if any of the path components exist in the schema
+        const firstPart = pathParts[0];
+        return schemaPaths.has(firstPart) || commonPaths.includes(firstPart);
+
+    } catch (error) {
+        console.warn('JSONPath validation error:', error);
+        return true; // If validation fails, allow the path (fail-safe approach)
+    }
+};
 
 const PREFIX = 'General';
 
@@ -121,6 +216,7 @@ const General: FC<GeneralProps> = ({
     isAPILevelPolicy,
 }) => {
     const intl = useIntl();
+    const [api] = useAPI(); // Get API object to access OpenAPI spec
 
     const [saving, setSaving] = useState(false);
     const [applyToAll, setApplyToAll] = useState(false);
@@ -131,6 +227,7 @@ const General: FC<GeneralProps> = ({
     const [isManual, setManual] = useState(false);
     const [manualPolicyConfig, setManualPolicyConfig] = useState<string>('');
     const [secretVisibility, setSecretVisibility] = useState<Record<string, boolean>>({});
+    const [openAPISpec, setOpenAPISpec] = useState<any>(null);
 
     useEffect(() => {
         if (
@@ -141,6 +238,27 @@ const General: FC<GeneralProps> = ({
             setManual(true);
         }
     }, [policyObj]);
+
+    useEffect(() => {
+        // Fetch OpenAPI specification for JSONPath validation
+        if (api && api.type !== 'WS') {
+            api.getSwagger()
+                .then((response: any) => {
+                    setOpenAPISpec(response.body);
+                })
+                .catch((error: any) => {
+                    console.warn('Failed to fetch OpenAPI spec for JSONPath validation:', error);
+                });
+        } else if (api && api.type === 'WS') {
+            api.getAsyncAPIDefinition(api.id)
+                .then((response: any) => {
+                    setOpenAPISpec(response.body);
+                })
+                .catch((error: any) => {
+                    console.warn('Failed to fetch AsyncAPI spec for JSONPath validation:', error);
+                });
+        }
+    }, [api]);
 
     if (!policyObj) {
         return <Progress />
@@ -300,6 +418,17 @@ const General: FC<GeneralProps> = ({
                 } catch(e) {
                     console.error(e);
                 }
+            } else if (
+                value !== '' &&
+                specInCheck.name.toLowerCase() === 'jsonpath' &&
+                openAPISpec &&
+                !validateJSONPathAgainstSchema(value, openAPISpec)
+            ) {
+                // JSONPath validation against OpenAPI schema
+                error = intl.formatMessage({
+                    id: 'Apis.Details.Policies.AttachedPolicyForm.General.jsonpath.validation.error',
+                    defaultMessage: 'The provided JSON path does not exist in the API schema. Please verify the path references valid properties in your API specification.',
+                });
             }
         }
         return error;
