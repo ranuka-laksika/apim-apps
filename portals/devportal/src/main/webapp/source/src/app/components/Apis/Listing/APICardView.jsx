@@ -173,14 +173,45 @@ class APICardView extends React.Component {
                     { query: `${searchText} status:published`, limit: this.rowsPerPage, offset: page * rowsPerPage },
                 );
             }
-            // Default case for APIs
-            return api.getAllAPIs({ query: `${searchText} status:published`, limit: this.rowsPerPage, offset: page * rowsPerPage });
+            // Enhanced search for APIs: try searching by display-name first, then fallback to name
+            // Use display-name syntax as mentioned in the issue comments as a workaround
+            const displayNameQuery = `display-name:${searchText} status:published`;
+            return api.getAllAPIs({ query: displayNameQuery, limit: this.rowsPerPage, offset: page * rowsPerPage })
+                .then((response) => {
+                    // If display name search returns results, use those
+                    if (response.body && response.body.list && response.body.list.length > 0) {
+                        return response;
+                    }
+                    // Otherwise, fallback to searching by name
+                    const nameQuery = `name:${searchText} status:published`;
+                    return api.getAllAPIs({
+                        query: nameQuery,
+                        limit: this.rowsPerPage,
+                        offset: page * rowsPerPage,
+                    });
+                })
+                .catch(() => {
+                    // If display-name search fails, fallback to original search behavior
+                    return api.getAllAPIs({
+                        query: `${searchText} status:published`,
+                        limit: this.rowsPerPage,
+                        offset: page * rowsPerPage,
+                    });
+                });
         } else {
             if (isMCPServersRoute) {
-                return api.getAllMCPServers({ query: 'status:published', limit: this.rowsPerPage, offset: page * rowsPerPage });
+                return api.getAllMCPServers({
+                    query: 'status:published',
+                    limit: this.rowsPerPage,
+                    offset: page * rowsPerPage,
+                });
             }
             // Default case for APIs
-            return api.getAllAPIs({ query: 'status:published', limit: this.rowsPerPage, offset: page * rowsPerPage });
+            return api.getAllAPIs({
+                query: 'status:published',
+                limit: this.rowsPerPage,
+                offset: page * rowsPerPage,
+            });
         }
     };
 
@@ -253,6 +284,13 @@ class APICardView extends React.Component {
                     id: isMCPServersRoute ? 'Apis.Listing.MCPServerList.name' : 'Apis.Listing.APIList.name',
                     defaultMessage: 'Name',
                 }),
+                options: {
+                    customBodyRender: (value, tableMeta) => {
+                        // Show displayName if available, otherwise show name
+                        const displayName = tableMeta.rowData?.[3]; // index of 'displayName' column in rowData
+                        return displayName || value;
+                    },
+                },
             },
             {
                 name: 'displayName',
@@ -261,11 +299,7 @@ class APICardView extends React.Component {
                     defaultMessage: 'Display Name',
                 }),
                 options: {
-                    customBodyRender: (value, tableMeta) => {
-                        // Find the index of 'name' column from the table data
-                        const fallbackName = tableMeta.rowData?.[2]; // index of 'name' column in rowData
-                        return value || fallbackName;
-                    },
+                    display: 'excluded', // Hide the Display Name column as requested
                 },
             },
             {
