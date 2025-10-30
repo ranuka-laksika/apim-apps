@@ -173,8 +173,9 @@ class APICardView extends React.Component {
                     { query: `${searchText} status:published`, limit: this.rowsPerPage, offset: page * rowsPerPage },
                 );
             }
-            // Default case for APIs
-            return api.getAllAPIs({ query: `${searchText} status:published`, limit: this.rowsPerPage, offset: page * rowsPerPage });
+            // Default case for APIs - search by both name and display-name
+            const apiQuery = `name:${searchText} OR display-name:${searchText} status:published`;
+            return api.getAllAPIs({ query: apiQuery, limit: this.rowsPerPage, offset: page * rowsPerPage });
         } else {
             if (isMCPServersRoute) {
                 return api.getAllMCPServers({ query: 'status:published', limit: this.rowsPerPage, offset: page * rowsPerPage });
