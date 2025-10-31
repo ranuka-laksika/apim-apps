@@ -22,14 +22,14 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 import Table from '@mui/material/Table';
+import TableHead from '@mui/material/TableHead';
+import TableBody from '@mui/material/TableBody';
 import TextField from '@mui/material/TextField';
 import TableCell from '@mui/material/TableCell';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TableRow from '@mui/material/TableRow';
 import PropTypes from 'prop-types';
-import TableBody from '@mui/material/TableBody';
-import TableHead from '@mui/material/TableHead';
 import Box from '@mui/material/Box';
 
 const PREFIX = 'UpdateComplexity';
@@ -145,53 +145,58 @@ export default function UpdateComplexity(props) {
                                             />
                                             <AccordionDetails>
                                                 <Grid item md={12}>
-                                                    <Table>
-                                                        <TableRow>
-                                                            <TableCell>
-                                                                <b>
-                                                                    <FormattedMessage
-                                                                        id={'Apis.Details.QueryAnalysis.'
-                                                                            + 'UpdateComplexity.table.field'}
-                                                                        defaultMessage='Field'
-                                                                    />
-                                                                </b>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <b>
-                                                                    <FormattedMessage
-                                                                        id={'Apis.Details.QueryAnalysis.'
-                                                                            + 'UpdateComplexity.table.complexity.value'}
-                                                                        defaultMessage='ComplexityValue'
-                                                                    />
-                                                                </b>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                        {list.map((respond, index) => ((respond.type === typename.type)
-                                                     && (
-                                                         <TableRow>
-                                                             <TableCell>
-                                                                 {respond.field}
-                                                             </TableCell>
-                                                             <TableCell>
-                                                                 <TextField
-                                                                     id='complexityValue'
-                                                                     label='complexityValue'
-                                                                     margin='normal'
-                                                                     variant='outlined'
-                                                                     value={respond.complexityValue}
-                                                                     onChange={(event) => {
-                                                                         const newArr = [...list];
-                                                                         newArr[index] = {
-                                                                             type: respond.type,
-                                                                             field: respond.field,
-                                                                             complexityValue: +event.target.value,
-                                                                         };
-                                                                         setList(newArr);
-                                                                     }}
-                                                                 />
-                                                             </TableCell>
-                                                         </TableRow>
-                                                     )))}
+                                                    <Table stickyHeader>
+                                                        <TableHead>
+                                                            <TableRow>
+                                                                <TableCell>
+                                                                    <b>
+                                                                        <FormattedMessage
+                                                                            id={'Apis.Details.QueryAnalysis.'
+                                                                                + 'UpdateComplexity.table.field'}
+                                                                            defaultMessage='Field'
+                                                                        />
+                                                                    </b>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <b>
+                                                                        <FormattedMessage
+                                                                            id={'Apis.Details.QueryAnalysis.'
+                                                                                + 'UpdateComplexity.table.complexity'
+                                                                                + '.value'}
+                                                                            defaultMessage='ComplexityValue'
+                                                                        />
+                                                                    </b>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        </TableHead>
+                                                        <TableBody>
+                                                            {list.map((respond, index) => (
+                                                                (respond.type === typename.type) && (
+                                                             <TableRow key={`${respond.type}-${respond.field}`}>
+                                                                 <TableCell>
+                                                                     {respond.field}
+                                                                 </TableCell>
+                                                                 <TableCell>
+                                                                     <TextField
+                                                                         id='complexityValue'
+                                                                         label='complexityValue'
+                                                                         margin='normal'
+                                                                         variant='outlined'
+                                                                         value={respond.complexityValue}
+                                                                         onChange={(event) => {
+                                                                             const newArr = [...list];
+                                                                             newArr[index] = {
+                                                                                 type: respond.type,
+                                                                                 field: respond.field,
+                                                                                 complexityValue: +event.target.value,
+                                                                             };
+                                                                             setList(newArr);
+                                                                         }}
+                                                                     />
+                                                                 </TableCell>
+                                                             </TableRow>
+                                                         )))}
+                                                        </TableBody>
                                                     </Table>
                                                 </Grid>
                                             </AccordionDetails>
