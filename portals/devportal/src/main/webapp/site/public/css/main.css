@@ -491,6 +491,23 @@ a {
   color: #000 !important;
 }
 
+/* Fix query parameter button alignment issues */
+.swagger-ui .parameters-table .btn {
+  vertical-align: middle;
+  margin-top: 0;
+}
+
+.swagger-ui .parameters-table tbody tr td:last-child {
+  vertical-align: middle;
+}
+
+.swagger-ui .parameter__add {
+  vertical-align: middle;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
 /* Styles to support rendering for markdown tables */
 .markdown-content-wrapper {
   padding-left: 20px;
