@@ -154,7 +154,7 @@ export default function ProvideGraphQL(props) {
                 const isValidURL = response.body.isValid;
                 if (isValidURL) {
                     inputsDispatcher({ action: 'graphQLInfo', value: graphQLInfo });
-                    setValidity({ isValidURL, file: null });
+                    setValidity({ url: null, file: null });
                 } else {
                     let errorMessage;
                     if (inputType === ProvideGraphQL.INPUT_TYPES.ENDPOINT) {
@@ -163,8 +163,8 @@ export default function ProvideGraphQL(props) {
                         errorMessage = 'Error occurred while retrieving GraphQL schema from url';
                     }
                     setValidity({
-                        isValidURL,
-                        file: { message: errorMessage }
+                        url: { message: errorMessage },
+                        file: null
                     });
                 }
                 onValidate(isValidURL);
@@ -422,8 +422,8 @@ export default function ProvideGraphQL(props) {
                             helperText={(isValid.url && isValid.url.message)
                                 || (
                                     <FormattedMessage
-                                        id='Apis.Create.GraphQL.create.api.url.helper.text'
-                                        defaultMessage='Click away to validate the URL'
+                                        id='Apis.Create.GraphQL.create.api.endpoint.helper.text'
+                                        defaultMessage='Click away to validate the endpoint'
                                     />
                                 )}
                             error={isInvalidURL}
