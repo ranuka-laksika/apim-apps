@@ -47,7 +47,19 @@ const Root = styled('div')((
     [`& .${classes.searchWrapper}`]: {
         width: '100%',
         marginBottom: theme.spacing(2),
-    }
+    },
+    '& .MuiTable-root': {
+        '& .MuiTableHead-root': {
+            '& .MuiTableRow-root': {
+                '& .MuiTableCell-root': {
+                    backgroundColor: theme.palette.background.paper,
+                    zIndex: theme.zIndex.appBar,
+                    position: 'sticky',
+                    top: 0,
+                },
+            },
+        },
+    },
 }));
 
 /**
