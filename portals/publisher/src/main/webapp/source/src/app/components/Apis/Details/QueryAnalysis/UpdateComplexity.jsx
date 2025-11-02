@@ -96,117 +96,133 @@ export default function UpdateComplexity(props) {
                 </Box>
             </Grid>
             <Grid item md={12}>
-                <Table stickyHeader>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>
-                                <Typography variant='subtitle2'>
-                                    <FormattedMessage
-                                        id='Apis.Details.QueryAnalysis.UpdateComplexity.typeName'
-                                        defaultMessage='Type'
-                                    />
-                                </Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant='subtitle2'>
-                                    <FormattedMessage
-                                        id='Apis.Details.QueryAnalysis.UpdateComplexity.fieldcomplexity'
-                                        defaultMessage='Fields'
-                                    />
-                                </Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant='subtitle2'>
-                                    <FormattedMessage
-                                        id='Apis.Details.QueryAnalysis.UpdateComplexity.fieldcomplexitysum'
-                                        defaultMessage='Sum of the Complexity'
-                                    />
-                                </Typography>
-                            </TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {typelist.filter(
-                            (item) => item.type.toLowerCase().includes(filterKeyWord),
-                        ).map((typename) => {
-                            return (
-                                <TableRow style={{ borderStyle: 'hidden' }}>
-                                    <TableCell>
-                                        <Typography variant='body1'>
-                                            {typename.type}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Accordion>
-                                            <AccordionSummary
-                                                expandIcon={<ExpandMoreIcon />}
-                                                aria-controls='panel1a-content'
-                                                id='panel1a-header'
-                                            />
-                                            <AccordionDetails>
-                                                <Grid item md={12}>
-                                                    <Table>
-                                                        <TableRow>
-                                                            <TableCell>
-                                                                <b>
-                                                                    <FormattedMessage
-                                                                        id={'Apis.Details.QueryAnalysis.'
-                                                                            + 'UpdateComplexity.table.field'}
-                                                                        defaultMessage='Field'
-                                                                    />
-                                                                </b>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <b>
-                                                                    <FormattedMessage
-                                                                        id={'Apis.Details.QueryAnalysis.'
-                                                                            + 'UpdateComplexity.table.complexity.value'}
-                                                                        defaultMessage='ComplexityValue'
-                                                                    />
-                                                                </b>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                        {list.map((respond, index) => ((respond.type === typename.type)
-                                                     && (
-                                                         <TableRow>
-                                                             <TableCell>
-                                                                 {respond.field}
-                                                             </TableCell>
-                                                             <TableCell>
-                                                                 <TextField
-                                                                     id='complexityValue'
-                                                                     label='complexityValue'
-                                                                     margin='normal'
-                                                                     variant='outlined'
-                                                                     value={respond.complexityValue}
-                                                                     onChange={(event) => {
-                                                                         const newArr = [...list];
-                                                                         newArr[index] = {
-                                                                             type: respond.type,
-                                                                             field: respond.field,
-                                                                             complexityValue: +event.target.value,
-                                                                         };
-                                                                         setList(newArr);
-                                                                     }}
-                                                                 />
-                                                             </TableCell>
-                                                         </TableRow>
-                                                     )))}
-                                                    </Table>
-                                                </Grid>
-                                            </AccordionDetails>
-                                        </Accordion>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant='body1'>
-                                            {typename.summation}
-                                        </Typography>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
+                <Box
+                    sx={{
+                        maxHeight: 400,
+                        overflow: 'auto',
+                        '& .MuiTableHead-root': {
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 1,
+                            backgroundColor: '#fff',
+                        },
+                    }}
+                >
+                    <Table stickyHeader>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>
+                                    <Typography variant='subtitle2'>
+                                        <FormattedMessage
+                                            id='Apis.Details.QueryAnalysis.UpdateComplexity.typeName'
+                                            defaultMessage='Type'
+                                        />
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant='subtitle2'>
+                                        <FormattedMessage
+                                            id='Apis.Details.QueryAnalysis.UpdateComplexity.fieldcomplexity'
+                                            defaultMessage='Fields'
+                                        />
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant='subtitle2'>
+                                        <FormattedMessage
+                                            id='Apis.Details.QueryAnalysis.UpdateComplexity.fieldcomplexitysum'
+                                            defaultMessage='Sum of the Complexity'
+                                        />
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {typelist.filter(
+                                (item) => item.type.toLowerCase().includes(filterKeyWord),
+                            ).map((typename) => {
+                                return (
+                                    <TableRow style={{ borderStyle: 'hidden' }}>
+                                        <TableCell>
+                                            <Typography variant='body1'>
+                                                {typename.type}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Accordion>
+                                                <AccordionSummary
+                                                    expandIcon={<ExpandMoreIcon />}
+                                                    aria-controls='panel1a-content'
+                                                    id='panel1a-header'
+                                                />
+                                                <AccordionDetails>
+                                                    <Grid item md={12}>
+                                                        <Table>
+                                                            <TableRow>
+                                                                <TableCell>
+                                                                    <b>
+                                                                        <FormattedMessage
+                                                                            id={'Apis.Details.QueryAnalysis.'
+                                                                                + 'UpdateComplexity.table.field'}
+                                                                            defaultMessage='Field'
+                                                                        />
+                                                                    </b>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <b>
+                                                                        <FormattedMessage
+                                                                            id={'Apis.Details.QueryAnalysis.'
+                                                                                + 'UpdateComplexity.table.'
+                                                                                + 'complexity.value'}
+                                                                            defaultMessage='ComplexityValue'
+                                                                        />
+                                                                    </b>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                            {list.map((respond, index) => ((respond.type
+                                                                === typename.type)
+                                                                && (
+                                                                    <TableRow>
+                                                                        <TableCell>
+                                                                            {respond.field}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <TextField
+                                                                                id='complexityValue'
+                                                                                label='complexityValue'
+                                                                                margin='normal'
+                                                                                variant='outlined'
+                                                                                value={respond.complexityValue}
+                                                                                onChange={(event) => {
+                                                                                    const newArr = [...list];
+                                                                                    newArr[index] = {
+                                                                                        type: respond.type,
+                                                                                        field: respond.field,
+                                                                                        complexityValue:
+                                                                                        +event.target.value,
+                                                                                    };
+                                                                                    setList(newArr);
+                                                                                }}
+                                                                            />
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                )))}
+                                                        </Table>
+                                                    </Grid>
+                                                </AccordionDetails>
+                                            </Accordion>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant='body1'>
+                                                {typename.summation}
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </Box>
             </Grid>
         </Root>)
     );
