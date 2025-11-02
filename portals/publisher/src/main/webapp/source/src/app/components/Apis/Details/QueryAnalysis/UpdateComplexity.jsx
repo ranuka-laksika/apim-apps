@@ -145,53 +145,57 @@ export default function UpdateComplexity(props) {
                                             />
                                             <AccordionDetails>
                                                 <Grid item md={12}>
-                                                    <Table>
-                                                        <TableRow>
-                                                            <TableCell>
-                                                                <b>
-                                                                    <FormattedMessage
-                                                                        id={'Apis.Details.QueryAnalysis.'
-                                                                            + 'UpdateComplexity.table.field'}
-                                                                        defaultMessage='Field'
-                                                                    />
-                                                                </b>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <b>
-                                                                    <FormattedMessage
-                                                                        id={'Apis.Details.QueryAnalysis.'
-                                                                            + 'UpdateComplexity.table.complexity.value'}
-                                                                        defaultMessage='ComplexityValue'
-                                                                    />
-                                                                </b>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                        {list.map((respond, index) => ((respond.type === typename.type)
-                                                     && (
-                                                         <TableRow>
-                                                             <TableCell>
-                                                                 {respond.field}
-                                                             </TableCell>
-                                                             <TableCell>
-                                                                 <TextField
-                                                                     id='complexityValue'
-                                                                     label='complexityValue'
-                                                                     margin='normal'
-                                                                     variant='outlined'
-                                                                     value={respond.complexityValue}
-                                                                     onChange={(event) => {
-                                                                         const newArr = [...list];
-                                                                         newArr[index] = {
-                                                                             type: respond.type,
-                                                                             field: respond.field,
-                                                                             complexityValue: +event.target.value,
-                                                                         };
-                                                                         setList(newArr);
-                                                                     }}
-                                                                 />
-                                                             </TableCell>
-                                                         </TableRow>
-                                                     )))}
+                                                    <Table stickyHeader>
+                                                        <TableHead>
+                                                            <TableRow>
+                                                                <TableCell>
+                                                                    <b>
+                                                                        <FormattedMessage
+                                                                            id={'Apis.Details.QueryAnalysis.'
+                                                                                + 'UpdateComplexity.table.field'}
+                                                                            defaultMessage='Field'
+                                                                        />
+                                                                    </b>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <b>
+                                                                        <FormattedMessage
+                                                                            id={'Apis.Details.QueryAnalysis.'
+                                                                                + 'UpdateComplexity.table.complexity.value'}
+                                                                            defaultMessage='ComplexityValue'
+                                                                        />
+                                                                    </b>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        </TableHead>
+                                                        <TableBody>
+                                                            {list.map((respond, index) => ((respond.type === typename.type)
+                                                         && (
+                                                             <TableRow>
+                                                                 <TableCell>
+                                                                     {respond.field}
+                                                                 </TableCell>
+                                                                 <TableCell>
+                                                                     <TextField
+                                                                         id='complexityValue'
+                                                                         label='complexityValue'
+                                                                         margin='normal'
+                                                                         variant='outlined'
+                                                                         value={respond.complexityValue}
+                                                                         onChange={(event) => {
+                                                                             const newArr = [...list];
+                                                                             newArr[index] = {
+                                                                                 type: respond.type,
+                                                                                 field: respond.field,
+                                                                                 complexityValue: +event.target.value,
+                                                                             };
+                                                                             setList(newArr);
+                                                                         }}
+                                                                     />
+                                                                 </TableCell>
+                                                             </TableRow>
+                                                         )))}
+                                                        </TableBody>
                                                     </Table>
                                                 </Grid>
                                             </AccordionDetails>
