@@ -248,7 +248,73 @@ class CommonListingLegacy extends React.Component {
             allCategories: [],
             selectedCategory: null,
             selectedTag: null,
+            isMCPServersRoute: false,
+            filteredTags: [],
         };
+    }
+
+    /**
+     * Filter tags based on resource type availability
+     * This method checks which tags have associated resources for each type
+     * @param {Array} allTags - Array of all tags
+     * @param {boolean} isMCPServersRoute - Whether we're on MCP servers route
+     * @memberof CommonListingLegacy
+     */
+    async filterTagsByResourceType(allTags, isMCPServersRoute) {
+        try {
+            const filteredTags = [];
+
+            // Import the appropriate data service based on route
+            const { default: API } = await import('../../../data/api');
+            const apiClient = new API();
+
+            let mcpClient = null;
+            if (isMCPServersRoute) {
+                const { default: MCPServer } = await import('../../../data/MCPServer');
+                mcpClient = new MCPServer();
+            }
+
+            // Check each tag to see if it has associated resources
+            const tagCheckPromises = allTags.map(async (tag) => {
+                try {
+                    let hasResources = false;
+
+                    if (isMCPServersRoute && mcpClient) {
+                        // Check if tag has MCP servers
+                        const response = await mcpClient.getAllMCPServers({
+                            query: `tag:${tag.value}`,
+                            limit: 1
+                        });
+                        hasResources = response && response.body && response.body.count > 0;
+                    } else {
+                        // Check if tag has APIs
+                        const response = await apiClient.getAllAPIs({
+                            query: `tag:${tag.value}`,
+                            limit: 1
+                        });
+                        hasResources = response && response.body && response.body.count > 0;
+                    }
+
+                    return hasResources ? tag : null;
+                } catch (error) {
+                    // If error occurs, include the tag to be safe
+                    console.warn(`Error checking tag ${tag.value}:`, error);
+                    return tag;
+                }
+            });
+
+            // Wait for all tag checks to complete
+            const tagResults = await Promise.all(tagCheckPromises);
+
+            // Filter out null results (tags with no associated resources)
+            const validTags = tagResults.filter(tag => tag !== null);
+
+            this.setState({ filteredTags: validTags });
+        } catch (error) {
+            // If any error occurs, fall back to showing all tags
+            console.warn('Error filtering tags:', error);
+            this.setState({ filteredTags: allTags });
+        }
     }
 
     /**
@@ -262,7 +328,14 @@ class CommonListingLegacy extends React.Component {
         const promisedTags = restApiClient.getAllTags(tagsLimit);
         promisedTags
             .then((response) => {
-                this.setState({ allTags: response.body.list });
+                // Detect if we're on MCP servers route to filter tags accordingly
+                const isMCPServersRoute = window.location.pathname.includes('/mcp-servers');
+                this.setState({
+                    allTags: response.body.list,
+                    isMCPServersRoute: isMCPServersRoute
+                });
+                // Filter tags based on resource type availability
+                this.filterTagsByResourceType(response.body.list, isMCPServersRoute);
             })
             .catch(() => {
                 // Handle error silently
@@ -277,6 +350,28 @@ class CommonListingLegacy extends React.Component {
             });
         this.isMonetizationEnabled();
         this.isRecommendationEnabled();
+    }
+
+    /**
+     * Handle component updates to detect route changes
+     * @param {Object} prevProps - Previous props
+     * @memberof CommonListingLegacy
+     */
+    componentDidUpdate(prevProps) {
+        // Check if the route has changed
+        const prevRoute = prevProps.location.pathname;
+        const currentRoute = this.props.location.pathname;
+
+        if (prevRoute !== currentRoute) {
+            // Route changed, update the isMCPServersRoute state and re-filter tags
+            const isMCPServersRoute = currentRoute.includes('/mcp-servers');
+            this.setState({ isMCPServersRoute }, () => {
+                // Re-filter tags for the new route
+                if (this.state.allTags.length > 0) {
+                    this.filterTagsByResourceType(this.state.allTags, isMCPServersRoute);
+                }
+            });
+        }
     }
 
     /**
@@ -391,7 +486,8 @@ class CommonListingLegacy extends React.Component {
                 }
             }
         }
-        const tagPaneVisible = allTags && allTags.length > 0 && (tagCloudActive || active);
+        const effectiveTags = this.state.filteredTags.length > 0 ? this.state.filteredTags : allTags;
+        const tagPaneVisible = effectiveTags && effectiveTags.length > 0 && (tagCloudActive || active);
         const categoryPaneVisible = allCategories && allCategories.length > 0;
         return (
             <Root className={classNames(classes.apiListingWrapper, 'api-listing-wrapper')}>
@@ -411,12 +507,13 @@ class CommonListingLegacy extends React.Component {
                                 onCategorySelect={this.handleCategorySelect}
                             />
                         )}
-                        {tagPaneVisible && active && <TagCloudListingTags allTags={allTags} />}
+                        {tagPaneVisible && active && <TagCloudListingTags allTags={effectiveTags} isMCPServersRoute={this.state.isMCPServersRoute} />}
                         {tagPaneVisible && tagCloudActive && (
                             <ApiTagCloud
-                                allTags={allTags}
+                                allTags={effectiveTags}
                                 selectedTag={this.state.selectedTag}
                                 onTagSelect={this.handleTagSelect}
+                                isMCPServersRoute={this.state.isMCPServersRoute}
                             />
                         )}
                     </div>
@@ -505,7 +602,7 @@ class CommonListingLegacy extends React.Component {
                             </div>
                         )}
                     </div>
-                    {active && allTags && allTags.length > 0 && <ApiBreadcrumbs selectedTag={selectedTag} />}
+                    {active && effectiveTags && effectiveTags.length > 0 && <ApiBreadcrumbs selectedTag={selectedTag} />}
                     <div className={classes.listContentWrapper}>
                         {listType === 'grid' && (
                             <ApiContext.Provider value={{ isMonetizationEnabled }}>
@@ -521,7 +618,7 @@ class CommonListingLegacy extends React.Component {
                     {isRecommendationEnabled && user
                         && (
                             <div>
-                                {active && allTags && allTags.length > 0 && <ApiBreadcrumbs selectedTag={selectedTag} />}
+                                {active && effectiveTags && effectiveTags.length > 0 && <ApiBreadcrumbs selectedTag={selectedTag} />}
                                 <div className={classes.listContentWrapper}>
                                     {listType === 'grid' && (
                                         <ApiContext.Provider value={{ isRecommendationEnabled }}>
