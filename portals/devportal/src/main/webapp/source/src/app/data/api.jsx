@@ -674,11 +674,17 @@ export default class API extends Resource {
 
     /**
      * Get all tags
+     * @param {number} limit - Maximum number of tags to retrieve
+     * @param {string} typeFilter - Optional type filter to filter tags by API type
      * @returns {promise} promise all tags of APIs
      */
-    getAllTags(limit = 25) {
+    getAllTags(limit = 25, typeFilter = null) {
+        const params = { limit };
+        if (typeFilter) {
+            params.query = typeFilter;
+        }
         const promiseGet = this.client.then((client) => {
-            return client.apis.Tags.get_tags({ limit }, this._requestMetaData());
+            return client.apis.Tags.get_tags(params, this._requestMetaData());
         }).catch((error) => {
             console.error(error);
         });

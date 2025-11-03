@@ -259,7 +259,28 @@ class CommonListingLegacy extends React.Component {
     componentDidMount() {
         const restApiClient = new API();
         const tagsLimit = -1;
-        const promisedTags = restApiClient.getAllTags(tagsLimit);
+
+        // Detect the current route to fetch appropriate tags
+        const isMCPServersRoute = window.location.pathname.includes('/mcp-servers');
+        const isSearchRoute = window.location.pathname.includes('/search');
+
+        // Define type filters for different views
+        const apiTypeFilter = 'type:HTTP OR type:WS OR type:SOAPTOREST OR type:GRAPHQL OR type:SOAP OR '
+            + 'type:SSE OR type:WEBSUB OR type:WEBHOOK OR type:ASYNC OR type:APIProduct';
+        const mcpTypeFilter = 'type:MCP';
+
+        let promisedTags;
+        if (isMCPServersRoute) {
+            // For MCP Servers route, get only MCP Server tags
+            promisedTags = restApiClient.getAllTags(tagsLimit, mcpTypeFilter);
+        } else if (isSearchRoute) {
+            // For unified search, get all tags
+            promisedTags = restApiClient.getAllTags(tagsLimit);
+        } else {
+            // For APIs route, get only API tags
+            promisedTags = restApiClient.getAllTags(tagsLimit, apiTypeFilter);
+        }
+
         promisedTags
             .then((response) => {
                 this.setState({ allTags: response.body.list });
