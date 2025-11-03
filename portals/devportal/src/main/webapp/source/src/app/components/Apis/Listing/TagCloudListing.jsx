@@ -87,7 +87,10 @@ export default function TagCloudListing() {
     const tagsLimit = -1;
     useEffect(() => {
         const restApiClient = new API();
-        const promisedTags = restApiClient.getAllTags(tagsLimit);
+        // Detect if we're on MCP servers route to filter tags accordingly
+        const isMCPServersRoute = window.location.pathname.includes('/mcp-servers');
+        const resourceType = isMCPServersRoute ? 'MCP' : 'API';
+        const promisedTags = restApiClient.getAllTags(tagsLimit, resourceType);
         promisedTags
             .then((response) => {
                 setAllTags(response.body.list);
