@@ -194,6 +194,13 @@ export default function ProvideGraphQL(props) {
     );
 
     function validateURL(value) {
+        // Only validate if value is not empty
+        if (!value || value.trim() === '') {
+            setValidity({ ...isValid, url: { message: 'URL should not be empty' } });
+            onValidate(false);
+            return;
+        }
+
         const state = APIValidation.url.required().validate(value).error;
         if (state === null) {
             setIsValidating(true);
