@@ -38,6 +38,7 @@ import DropZoneLocal, { humanFileSize } from 'AppComponents/Shared/DropZoneLocal
 import Banner from 'AppComponents/Shared/Banner';
 import { debounce, FormControlLabel, InputAdornment, Radio, RadioGroup, TextField } from '@mui/material';
 import APIValidation from 'AppData/APIValidation';
+import Joi from '@hapi/joi';
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
@@ -194,7 +195,13 @@ export default function ProvideGraphQL(props) {
     );
 
     function validateURL(value) {
-        const state = APIValidation.url.required().validate(value).error;
+        const emptyState = Joi.string().required().validate(value).error;
+        if (emptyState !== null) {
+            setValidity({ ...isValid, url: emptyState });
+            onValidate(false);
+            return;
+        }
+        const state = APIValidation.url.validate(value).error;
         if (state === null) {
             setIsValidating(true);
             debouncedValidateURLOrEndpoint(apiInputs.inputValue);
