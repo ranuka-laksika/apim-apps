@@ -225,6 +225,10 @@ export default function GraphQLQueryAnalysis(props) {
                         width: '100%',
                         maxWidth: '65vw',
                         maxHeight: '95vh',
+                    },
+                    '& .MuiDialogContent-root': {
+                        maxHeight: '60vh',
+                        overflow: 'auto',
                     }
                 }}
             >
