@@ -728,7 +728,7 @@ function TryOutController(props) {
                                 keyManagers={keyManagers}
                             />
                         )}
-                    {subscriptions && subscriptions.length === 0 && securitySchemeType !== 'TEST'
+                    {user && subscriptions && subscriptions.length === 0 && securitySchemeType !== 'TEST'
                     && securitySchemeType !== 'BASIC' && (api.gatewayVendor === 'wso2' || !api.gatewayVendor)
                         && (!api.advertiseInfo || !api.advertiseInfo.advertised) && !isSubValidationDisabled ? (
                             <Grid x={8} md={6} className={classes.tokenType} item>
