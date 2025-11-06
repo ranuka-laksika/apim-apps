@@ -180,6 +180,8 @@ function getPath(suggestion) {
     switch (suggestion.type) {
         case 'API':
             return `/apis/${suggestion.id}/overview`;
+        case 'API_PRODUCT':
+            return `/api-products/${suggestion.id}/overview`;
         case 'DEFINITION':
             return `/apis/${suggestion.apiUUID}/overview`;
         default:
@@ -199,13 +201,23 @@ function renderSuggestion(suggestion, { query, isHighlighted }) {
     const parts = parse(suggestion.displayName || suggestion.name, matches);
     const path = getPath(suggestion);
     // TODO: Style the version ( and apiName if docs) apearing in the menu item
-    const suffix = suggestion.type === 'API' ? suggestion.version : ((suggestion.apiDisplayName
-        || suggestion.apiName) + ' ' + suggestion.apiVersion);
+    const suffix = (suggestion.type === 'API' || suggestion.type === 'API_PRODUCT')
+        ? suggestion.version
+        : ((suggestion.apiDisplayName || suggestion.apiName) + ' ' + suggestion.apiVersion);
     const getIcon = (type) => {
         if (type === 'API') {
             return (
                 <CustomIcon
                     icon='api'
+                    width={16}
+                    height={16}
+                    strokeColor='black'
+                />
+            );
+        } else if (type === 'API_PRODUCT') {
+            return (
+                <CustomIcon
+                    icon='api-product'
                     width={16}
                     height={16}
                     strokeColor='black'
