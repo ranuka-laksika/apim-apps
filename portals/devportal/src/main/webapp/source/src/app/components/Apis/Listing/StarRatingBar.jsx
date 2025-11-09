@@ -165,7 +165,7 @@ class StarRatingBarLegacy extends React.Component {
         // get api rating
         if (user != null) {
             const promisedRating = restApi.getRatingFromUser(apiId, null);
-            promisedRating.then((response) => {
+            return promisedRating.then((response) => {
                 this.setState({
                     avgRating: response.body.avgRating,
                     userRating: response.body.userRating,
@@ -181,6 +181,7 @@ class StarRatingBarLegacy extends React.Component {
                 }
             });
         }
+        return Promise.resolve();
     }
 
     /**
@@ -197,7 +198,7 @@ class StarRatingBarLegacy extends React.Component {
         const promise = restApi.addRating(apiId, ratingInfo);
         promise
             .then(() => {
-                this.getApiRating();
+                return this.getApiRating();
             })
             .catch((error) => {
                 Alert.error(intl.formatMessage({
