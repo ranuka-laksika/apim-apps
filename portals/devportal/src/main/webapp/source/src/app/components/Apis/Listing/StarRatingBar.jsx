@@ -378,7 +378,7 @@ StarRatingBarLegacy.propTypes = {
 
 function StarRatingBar(props) {
     const {
-        apiRating, apiId, isEditable, showSummary,
+        apiRating, apiId, isEditable, showSummary, setRatingUpdate,
     } = props;
     const theme = useTheme();
     return (
@@ -387,6 +387,7 @@ function StarRatingBar(props) {
             apiId={apiId}
             isEditable={isEditable}
             showSummary={showSummary}
+            setRatingUpdate={setRatingUpdate}
             theme={theme}
         />
     );
