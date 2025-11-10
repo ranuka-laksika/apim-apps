@@ -59,12 +59,12 @@ const Root = styled('div')((
  */
 function StarRatingSummary(props) {
     const {
-        avgRating, reviewCount, returnCount,
+        avgRating, reviewCount,
     } = props;
     const theme = useTheme();
     return (
         <Root>
-            {returnCount > 0 ? (
+            {reviewCount > 0 ? (
                 <>
                     <Icon className={classes.starRate}>star</Icon>
                     <div className={classes.ratingSummary}>
