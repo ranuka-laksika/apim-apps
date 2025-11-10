@@ -64,7 +64,7 @@ function StarRatingSummary(props) {
     const theme = useTheme();
     return (
         <Root>
-            {returnCount > 0 ? (
+            {(returnCount > 0 || avgRating > 0) ? (
                 <>
                     <Icon className={classes.starRate}>star</Icon>
                     <div className={classes.ratingSummary}>
