@@ -289,7 +289,7 @@ class StarRatingBarLegacy extends React.Component {
                                 </IconButton>
                                 {showEditing && (
                                     <>
-                                        <ClickAwayListener onClickAway={this.toggleEditRating}>
+                                        <ClickAwayListener onClickAway={() => { this.getApiRating(); this.toggleEditRating(); }}>
                                             <div className={classes.userRating}>
                                                 {[1, 2, 3, 4, 5].map((i) => (
                                                     <IconButton area-label={'Rate ' + i} onClick={() => this.doRate(i)} size='large'>
