@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import IconButton from '@mui/material/IconButton';
 import API from 'AppData/api';
+import APIProduct from 'AppData/APIProduct';
 import MCPServer from 'AppData/MCPServer';
 import { resourceMethod, resourcePath, ScopeValidation } from 'AppData/ScopeValidation';
 import Alert from 'AppComponents/Shared/Alert';
@@ -169,7 +170,13 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/api-products');
+                        // Fetch updated API Product list to ensure latest count is retrieved on the listing page
+                        APIProduct.all({ limit: 1, offset: 0 }).then(() => {
+                            history.push('/api-products');
+                        }).catch(() => {
+                            // Even if the fetch fails, still redirect
+                            history.push('/api-products');
+                        });
                     }
                 })
                 .catch((error) => {
@@ -241,7 +248,13 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/apis');
+                        // Fetch updated API list to ensure latest count is retrieved on the listing page
+                        API.all({ limit: 1, offset: 0 }).then(() => {
+                            history.push('/apis');
+                        }).catch(() => {
+                            // Even if the fetch fails, still redirect
+                            history.push('/apis');
+                        });
                     }
                 })
                 .catch((error) => {
