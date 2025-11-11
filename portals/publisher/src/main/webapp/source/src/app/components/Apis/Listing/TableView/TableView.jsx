@@ -117,11 +117,17 @@ class TableView extends React.Component {
      * @param {*} prevProps previous properties
      */
     componentDidUpdate(prevProps) {
-        const { isAPIProduct, isMCPServer, query } = this.props;
+        const { isAPIProduct, isMCPServer, query, location } = this.props;
         const { rowsPerPage, page } = this.state;
+        const fromDelete = location && location.state && location.state.fromDelete;
         if (isAPIProduct !== prevProps.isAPIProduct
-            || isMCPServer !== prevProps.isMCPServer || query !== prevProps.query) {
+            || isMCPServer !== prevProps.isMCPServer || query !== prevProps.query
+            || fromDelete) {
             this.getData(rowsPerPage, page);
+            // Clear the state to prevent refetching on subsequent updates
+            if (fromDelete && location && location.state) {
+                location.state.fromDelete = false;
+            }
         }
     }
 

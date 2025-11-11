@@ -169,7 +169,7 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/api-products');
+                        history.push('/api-products', { fromDelete: true });
                     }
                 })
                 .catch((error) => {
@@ -205,7 +205,7 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/mcp-servers');
+                        history.push('/mcp-servers', { fromDelete: true });
                     }
                 })
                 .catch((error) => {
@@ -241,7 +241,7 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/apis');
+                        history.push('/apis', { fromDelete: true });
                     }
                 })
                 .catch((error) => {
