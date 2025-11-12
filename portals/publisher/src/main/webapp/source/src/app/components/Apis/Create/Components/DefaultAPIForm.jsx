@@ -537,7 +537,10 @@ export default function DefaultAPIForm(props) {
                                         (validity.context
                                             && validity.context.details.map((detail, index) => {
                                                 return (
-                                                    <div style={{ marginTop: index !== 0 && '10px' }}>
+                                                    <div
+                                                        key={detail.message}
+                                                        style={{ marginTop: index !== 0 && '10px' }}
+                                                    >
                                                         {detail.message}
                                                     </div>
                                                 );
@@ -552,7 +555,6 @@ export default function DefaultAPIForm(props) {
                                             />
                                         )
                                     }
-                                    classes={{ root: classes.helperTextContext }}
                                     margin='normal'
                                     variant='outlined'
                                 />
