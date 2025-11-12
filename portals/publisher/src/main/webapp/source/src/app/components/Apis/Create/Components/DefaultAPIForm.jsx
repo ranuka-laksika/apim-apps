@@ -504,7 +504,7 @@ export default function DefaultAPIForm(props) {
                                 <TextField
                                     fullWidth
                                     id='context'
-                                    error={Boolean(validity.context)}
+                                    error={Boolean(validity.context && validity.context.details)}
                                     label={(
                                         <>
                                             {isWebSocket ? (
@@ -595,7 +595,7 @@ export default function DefaultAPIForm(props) {
                                 <TextField
                                     fullWidth
                                     id='context'
-                                    error={Boolean(validity.context)}
+                                    error={Boolean(validity.context && validity.context.details)}
                                     label={(
                                         <>
                                             <FormattedMessage
