@@ -104,7 +104,7 @@ const Endpoints = ({
         MCPServer.getMCPServerEndpoints(apiObject.id)
             .then((response) => {
                 const endpoints = response.body;
-                
+
                 // Filter endpoints based on their configuration
                 const filteredProductionEndpoints = filterEndpointsByType(endpoints, 'production');
                 const filteredSandboxEndpoints = filterEndpointsByType(endpoints, 'sandbox');
@@ -116,7 +116,7 @@ const Endpoints = ({
                 const productionUrls = extractEndpointUrls(filteredProductionEndpoints, 'production');
                 const sandboxUrls = extractEndpointUrls(filteredSandboxEndpoints, 'sandbox');
                 const endpointUrlList = [...productionUrls, ...sandboxUrls];
-                
+
                 setEndpointList(endpointUrlList);
             })
             .catch((error) => {
@@ -127,6 +127,24 @@ const Endpoints = ({
                 }));
             })
             .finally(() => setLoading(false));
+    };
+
+    /**
+     * Handle refetch definition completion
+     * @param {string} choice - The user's choice ('keep' or 'replace')
+     */
+    const handleRefetch = (choice) => {
+        // Refresh the endpoints to get the updated definition
+        fetchEndpoints();
+
+        // If the user chose to replace tools, we could redirect to tools page
+        // or trigger a tools refresh, but for now we'll just show a message
+        if (choice === 'replace') {
+            Alert.info(intl.formatMessage({
+                id: 'MCPServers.Details.Endpoints.Endpoints.refetch.replace.tools.info',
+                defaultMessage: 'Please go to the Tools tab to create new tools based on the updated definition',
+            }));
+        }
     };
 
     useEffect(() => {
@@ -282,6 +300,7 @@ const Endpoints = ({
                                 isDeleting={isDeleting}
                                 onDelete={() => handleDelete('PRODUCTION', endpoint)}
                                 endpointType='PRODUCTION'
+                                onRefetch={handleRefetch}
                             />
                         ))
                     ) : (
@@ -332,6 +351,7 @@ const Endpoints = ({
                                 isDeleting={isDeleting}
                                 onDelete={() => handleDelete('SANDBOX', endpoint)}
                                 endpointType='SANDBOX'
+                                onRefetch={handleRefetch}
                             />
                         ))
                     ) : (
