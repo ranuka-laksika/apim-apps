@@ -334,9 +334,9 @@ class TableView extends React.Component {
         if (totalCount - 1 === rowsPerPage * page && page !== 0) {
             newPage = page - 1;
         }
-        // Fetch fresh list data without overwriting the decremented count
+        // Fetch fresh list data and update the total count from server response
         setTimeout(() => {
-            this.getDataListOnly(rowsPerPage, newPage);
+            this.getData(rowsPerPage, newPage);
         }, 1000);
     }
 
