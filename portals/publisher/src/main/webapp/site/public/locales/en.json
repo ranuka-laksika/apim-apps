@@ -1377,6 +1377,7 @@
   "Apis.Details.Policies.AttachedPolicyForm.General.description.title": "Description",
   "Apis.Details.Policies.AttachedPolicyForm.General.description.value.not.provided": "Oops! Looks like this policy does not have a description",
   "Apis.Details.Policies.AttachedPolicyForm.General.description.value.provided": "{description}",
+  "Apis.Details.Policies.AttachedPolicyForm.General.jsonpath.validation.error": "The provided JSON path does not exist in the API schema. Please verify the path references valid properties in your API specification.",
   "Apis.Details.Policies.AttachedPolicyForm.General.regex.error": "Please enter a valid input",
   "Apis.Details.Policies.AttachedPolicyForm.General.required.error": "Required field is empty",
   "Apis.Details.Policies.AttachedPolicyForm.General.reset": "Reset",
