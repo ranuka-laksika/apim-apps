@@ -113,6 +113,23 @@ const ApisSection = ({ data, totalCount, onDelete }) => {
                         <Typography variant='h4' className={classes.title}>
                             <FormattedMessage id='Publisher.Landing.apis.section.title' defaultMessage='APIs' />
                         </Typography>
+                        {/* Prominent View All APIs link when there are more than 5 APIs */}
+                        {totalCount > data.length && (
+                            <Button
+                                variant='outlined'
+                                color='primary'
+                                component={Link}
+                                to='/apis'
+                                size='small'
+                                sx={{ ml: 2, fontWeight: 600 }}
+                            >
+                                <FormattedMessage
+                                    id='Publisher.Landing.view.all.apis.prominent'
+                                    defaultMessage='View All {count} APIs'
+                                    values={{ count: totalCount }}
+                                />
+                            </Button>
+                        )}
                     </div>
                     <Button
                         variant='contained'
