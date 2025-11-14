@@ -143,9 +143,9 @@ export default function UpdateComplexity(props) {
                                                 aria-controls='panel1a-content'
                                                 id='panel1a-header'
                                             />
-                                            <AccordionDetails>
+                                            <AccordionDetails style={{ zIndex: 1 }}>
                                                 <Grid item md={12}>
-                                                    <Table>
+                                                    <Table style={{ zIndex: 1, position: 'relative' }}>
                                                         <TableRow>
                                                             <TableCell>
                                                                 <b>
