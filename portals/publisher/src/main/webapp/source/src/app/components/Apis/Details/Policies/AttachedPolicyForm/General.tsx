@@ -46,6 +46,8 @@ import ModelRoundRobin from '../CustomPolicies/ModelRoundRobin';
 import ModelWeightedRoundRobin from '../CustomPolicies/ModelWeightedRoundRobin';
 import ModelFailover from '../CustomPolicies/ModelFailover';
 import { Editor } from '@monaco-editor/react';
+import { useAPI } from 'AppComponents/Apis/Details/components/ApiContext';
+import { validateJsonPathAgainstSchema, getJsonPathValidationError } from '../Utils/SchemaValidationUtils';
 
 const PREFIX = 'General';
 
@@ -121,6 +123,7 @@ const General: FC<GeneralProps> = ({
     isAPILevelPolicy,
 }) => {
     const intl = useIntl();
+    const [api] = useAPI();
 
     const [saving, setSaving] = useState(false);
     const [applyToAll, setApplyToAll] = useState(false);
@@ -273,7 +276,7 @@ const General: FC<GeneralProps> = ({
     /**
      * Function to get the error string, if there are any errors. Empty string to indicate the absence of errors.
      * @param {PolicySpecAttribute} specInCheck The policy attribute that needs to be checked for any errors.
-     * @returns {string} String with the error message, where empty string indicates that there are no errors. 
+     * @returns {string} String with the error message, where empty string indicates that there are no errors.
      */
     const getError = (specInCheck: PolicySpecAttribute) => {
         let error = '';
@@ -299,6 +302,23 @@ const General: FC<GeneralProps> = ({
                     }
                 } catch(e) {
                     console.error(e);
+                }
+            }
+
+            // Add JSON Path validation for attributes named "jsonPath"
+            if (error === '' && value !== '' && specInCheck.name.toLowerCase() === 'jsonpath') {
+                try {
+                    if (!isAPILevelPolicy && target && verb && api) {
+                        if (!validateJsonPathAgainstSchema(value, api, target, verb)) {
+                            error = intl.formatMessage({
+                                id: 'Apis.Details.Policies.AttachedPolicyForm.General.jsonpath.error',
+                                defaultMessage: 'JSONPath does not exist in the API schema for this operation',
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error validating JSONPath against schema:', e);
+                    // Don't set error for validation failures due to schema parsing issues
                 }
             }
         }
