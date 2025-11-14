@@ -61,6 +61,11 @@ const classes = {
 const StyledCard = styled(Card)(({ theme }) => ({
     [`&.${classes.card}`]: {
         width: '300px',
+        minWidth: '280px',
+        maxWidth: '100%',
+        flexBasis: 'auto',
+        flexGrow: 0,
+        flexShrink: 1,
         margin: theme.spacing(1),
         borderRadius: theme.spacing(1),
         transition: 'box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out',
@@ -71,6 +76,23 @@ const StyledCard = styled(Card)(({ theme }) => ({
         border: `0.5px solid ${theme.palette.divider}`,
         '&:hover': {
             boxShadow: theme.shadows[3],
+        },
+        // Responsive breakpoints for smaller screens
+        [theme.breakpoints.down('lg')]: {
+            width: 'calc(25% - 16px)',
+            minWidth: '240px',
+        },
+        [theme.breakpoints.down('md')]: {
+            width: 'calc(33.333% - 16px)',
+            minWidth: '200px',
+        },
+        [theme.breakpoints.down('sm')]: {
+            width: 'calc(50% - 16px)',
+            minWidth: '180px',
+        },
+        [theme.breakpoints.down('xs')]: {
+            width: 'calc(100% - 16px)',
+            minWidth: '160px',
         },
     },
 
