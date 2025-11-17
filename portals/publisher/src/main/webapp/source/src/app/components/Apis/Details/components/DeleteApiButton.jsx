@@ -169,7 +169,15 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/api-products');
+                        // Fetch updated API Product list to refresh the count before redirecting
+                        API.all({ limit: 1, offset: 0 })
+                            .then(() => {
+                                history.push('/api-products');
+                            })
+                            .catch(() => {
+                                // Even if fetch fails, redirect anyway
+                                history.push('/api-products');
+                            });
                     }
                 })
                 .catch((error) => {
@@ -205,7 +213,15 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/mcp-servers');
+                        // Fetch updated MCP Server list to refresh the count before redirecting
+                        API.all({ limit: 1, offset: 0 })
+                            .then(() => {
+                                history.push('/mcp-servers');
+                            })
+                            .catch(() => {
+                                // Even if fetch fails, redirect anyway
+                                history.push('/mcp-servers');
+                            });
                     }
                 })
                 .catch((error) => {
@@ -241,7 +257,15 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/apis');
+                        // Fetch updated API list to refresh the count before redirecting
+                        API.all({ limit: 1, offset: 0 })
+                            .then(() => {
+                                history.push('/apis');
+                            })
+                            .catch(() => {
+                                // Even if fetch fails, redirect anyway
+                                history.push('/apis');
+                            });
                     }
                 })
                 .catch((error) => {
