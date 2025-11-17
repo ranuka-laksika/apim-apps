@@ -10,11 +10,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class SecurityBackendApplication {
 
-	private static Logger logger = (Logger) LoggerFactory.getLogger(ApplicationUtils.class);
+	private static Logger logger = (Logger) LoggerFactory.getLogger(SecurityBackendApplication.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(SecurityBackendApplication.class, args);
-		logger.info("Vulnerabilitiy Analyzer : http://localhost:8080/" );
+		logger.info("Vulnerability Analyzer started successfully at http://localhost:8080/");
 
 	}
 

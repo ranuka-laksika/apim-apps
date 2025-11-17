@@ -32,12 +32,14 @@ public class VulnerabiltyServiceImpl implements VulnerabilityService {
      * and vulnerabilities in the newly generated json file.
      */
 
-    private static Logger logger = (Logger) LoggerFactory.getLogger(ApplicationUtils.class);
+    private static Logger logger = (Logger) LoggerFactory.getLogger(VulnerabiltyServiceImpl.class);
 
     @Override
     public ArrayList<Vulnerability> getAllVulnerabilitiesByPortal(String portalName, String branchName) throws FileNotFoundException {
 
-
+        if (logger.isDebugEnabled()) {
+            logger.debug("Processing vulnerabilities for portal: " + portalName + ", branch: " + branchName);
+        }
         ArrayList<Vulnerability> vulnerabilities = null;
         try {
             vulnerabilities = ApplicationUtils.getVulnerabilityListFromJSON(portalName,branchName);  //list of vulnerabilities from Json file generated from snyk analysis
@@ -49,6 +51,8 @@ public class VulnerabiltyServiceImpl implements VulnerabilityService {
         ArrayList<Vulnerability> oldList;// list of vulnerabilities serialized previously in text file
 
         if (Objects.equals(oldTable, null)) {
+            logger.info("No existing vulnerability data found. Initializing for portal: {}, branch: {}",
+                    portalName, branchName);
             oldList = vulnerabilities;
             Table<String,String, ArrayList<Vulnerability>> table = HashBasedTable.create();;
             table.put(portalName,branchName, oldList);
@@ -57,13 +61,17 @@ public class VulnerabiltyServiceImpl implements VulnerabilityService {
         } else {
             oldList = oldTable.get(portalName,branchName);
             if (Objects.equals(oldList, null)) {
+                logger.info("No vulnerability data for portal: {}, branch: {}. Adding new entry",
+                        portalName, branchName);
                 oldTable.put(portalName,branchName, vulnerabilities);
                 ApplicationUtils.serializeList(oldTable, portalName,branchName);
                 return vulnerabilities;
 
             } else {
 
-
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Comparing vulnerabilities for portal: " + portalName + ", branch: " + branchName);
+                }
                 /* add newly identified vulnerabilities from the JSON file to the  list of vulnerabilities
                 to be serialized in the text file */
                 ApplicationUtils.addNewlyIdentifiedVulnerabilities(vulnerabilities, oldList);
@@ -74,6 +82,8 @@ public class VulnerabiltyServiceImpl implements VulnerabilityService {
                 oldTable.put(portalName,branchName,oldList);
                 //serialize the modified Table to the text file.
                 ApplicationUtils.serializeList(oldTable, portalName,branchName);
+                logger.info("Vulnerability comparison completed for portal: {}, branch: {}",
+                        portalName, branchName);
                 return oldList;
 
             }
@@ -89,21 +99,27 @@ public class VulnerabiltyServiceImpl implements VulnerabilityService {
     @Override
     public void makeChangesOnVulnerabilities(Body body, String portalName, String branchName) {
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("Applying changes to vulnerabilities for portal: " + portalName + ", branch: " + branchName);
+        }
         Table<String,String,ArrayList<Vulnerability>> oldTable = ApplicationUtils.deSerializeList(portalName,branchName);
         ArrayList<Vulnerability> oldList=oldTable.get(portalName,branchName);
 
         ArrayList<Data> vulnerabilities = body.getVulnerabilities();
+        int updatedCount = 0;
         for (int counter = 0; counter < oldList.size(); counter++) {
             for (int counter1 = 0; counter1 < vulnerabilities.size(); counter1++) {
                 if ((vulnerabilities.get(counter1).getId()).equals(oldList.get(counter).getId())) {
 
                     oldList.get(counter).setState(vulnerabilities.get(counter1).getCurrentState());
                     oldList.get(counter).setComment(vulnerabilities.get(counter1).getCommentAdded());
+                    updatedCount++;
                 }
             }
         }
         oldTable.put(portalName,branchName,oldList);
         ApplicationUtils.serializeList(oldTable, portalName,branchName);
+        logger.info("Updated {} vulnerabilities for portal: {}, branch: {}", updatedCount, portalName, branchName);
     }
 
 
@@ -124,6 +140,9 @@ public class VulnerabiltyServiceImpl implements VulnerabilityService {
         resource = new File(path);
         long lastModified = resource.lastModified();
         Date date = new Date(lastModified);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Last modified time for file " + path + ": " + date);
+        }
         return date;
 
     }

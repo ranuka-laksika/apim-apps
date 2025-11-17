@@ -25,10 +25,14 @@ import java.io.FileReader;
 import java.util.Arrays;
 import java.util.Map;
 import javax.servlet.ServletContext;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 
 public class Util {
+
+    private static final Log log = LogFactory.getLog(Util.class);
 
     /**
      * Read a json file from the directory and output as a Map object.
@@ -39,9 +43,16 @@ public class Util {
      */
     public static Map<String, Object> readJsonFile(String path, ServletContext context) throws FileNotFoundException {
         String realPath = context.getRealPath(path);
+        if (log.isDebugEnabled()) {
+            log.debug("Reading JSON file from path: " + realPath);
+        }
         BufferedReader bufferedReader = new BufferedReader(new FileReader(realPath));
         Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
-        return (Map) gson.fromJson(bufferedReader, Map.class);
+        Map<String, Object> jsonMap = (Map) gson.fromJson(bufferedReader, Map.class);
+        if (log.isDebugEnabled()) {
+            log.debug("Successfully read JSON file from path: " + realPath);
+        }
+        return jsonMap;
     }
 
     /**
@@ -51,17 +62,26 @@ public class Util {
      * @return value in the given path of the nested tree map
      */
     public static Object readJsonObj(Map json, String path) {
+        if (log.isDebugEnabled()) {
+            log.debug("Reading JSON object from path: " + path);
+        }
         String[] pathStrings = path.split("\\.");
         Map nestedJson = json;
 
         for (String pathString : Arrays.copyOfRange(pathStrings, 0, pathStrings.length - 1)) {
             if (!nestedJson.containsKey(pathString)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Path not found in JSON object: " + pathString);
+                }
                 return null;
             }
             nestedJson = (Map) nestedJson.get(pathString);
         }
 
         if (!nestedJson.containsKey(pathStrings[pathStrings.length - 1])) {
+            if (log.isDebugEnabled()) {
+                log.debug("Final path key not found: " + pathStrings[pathStrings.length - 1]);
+            }
             return null;
         }
         return nestedJson.get(pathStrings[pathStrings.length - 1]);
@@ -76,14 +96,24 @@ public class Util {
      */
     public static String getLoopbackOrigin(String host) {
         int mgtTransportPort = APIUtil.getCarbonTransportPort("https"); // This is the actual server port (management) , Not the proxy port
-        return "https://" + host + ":" + mgtTransportPort; // Unless there is a port offset this is https://localhost:9443
+        String loopbackOrigin = "https://" + host + ":" + mgtTransportPort; // Unless there is a port offset this is https://localhost:9443
+        if (log.isDebugEnabled()) {
+            log.debug("Constructed loopback origin: " + loopbackOrigin + " for host: " + host);
+        }
+        return loopbackOrigin;
     }
 
     public static String getIDPOrigin() throws APIManagementException {
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving external IDP origin");
+        }
         return APIUtil.getExternalIDPOrigin();
     }
 
     public static String getIDPCheckSessionEndpoint() throws APIManagementException {
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving external IDP check session endpoint");
+        }
         return APIUtil.getExternalIDPCheckSessionEndpoint();
     }
 
@@ -108,6 +138,10 @@ public class Util {
         String appContext = context;
         if (proxyContext != null && !proxyContext.isEmpty()) {
             appContext = appContext.replace(proxyContext, "");
+            if (log.isDebugEnabled()) {
+                log.debug("App context after removing proxy context: " + appContext + ", original context: "
+                        + context + ", proxy context: " + proxyContext);
+            }
         }
         return appContext;
     }    

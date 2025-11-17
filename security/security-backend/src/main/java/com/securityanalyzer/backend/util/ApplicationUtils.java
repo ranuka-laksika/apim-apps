@@ -32,11 +32,13 @@ public class ApplicationUtils {
             output.writeObject(tree);
             output.close();
             fileOutput.close();
-            logger.info(String.format("Serialized data is saved in file for %s %s after serializing", portalName,branchName));
+            logger.info("Serialized vulnerability data saved for portal: {}, branch: {}", portalName, branchName);
         } catch (FileNotFoundException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("File not found while serializing data for portal: " + portalName + ", branch: "
+                    + branchName, e);
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("IO error while serializing data for portal: " + portalName + ", branch: "
+                    + branchName, e);
         }
     }
 
@@ -52,15 +54,17 @@ public class ApplicationUtils {
             table=(Table<String,String,ArrayList<Vulnerability>>) input.readObject();
             input.close();
             fileInput.close();
-            logger.info(String.format("Serialized data is received from vulnerabilities.txt for  %s %s", portalName,branchName));
+            logger.info("Deserialized vulnerability data retrieved for portal: {}, branch: {}", portalName, branchName);
         } catch (FileNotFoundException e) {
 
-            logger.warn("Application runs for the first time.");
+            logger.warn("Vulnerability data file not found. Application may be running for the first time");
             return null;
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("IO error while deserializing data for portal: " + portalName + ", branch: "
+                    + branchName, e);
         } catch (ClassNotFoundException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("Class not found while deserializing data for portal: " + portalName + ", branch: "
+                    + branchName, e);
         }
         return table;
     }
@@ -96,19 +100,22 @@ public class ApplicationUtils {
                  path = String.format("%s_%s.json", portalName,branchName);
             }
 
-
+            if (logger.isDebugEnabled()) {
+                logger.debug("Reading JSON file: " + path);
+            }
             FileInputStream fileInput = new FileInputStream(path);
             resource = fileInput.readAllBytes();
             text = new String(resource);
         } catch (FileNotFoundException e) {
-            logger.error(String.format("Json File %s not found.",path));
+            logger.error("JSON file not found: " + path + " for portal: " + portalName + ", branch: "
+                    + branchName);
             throw e;
 
 
 
 
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("IO error while reading JSON file: " + path, e);
         }
 
         JSONObject jsonDocument = (JSONObject) JSONValue.parse(text);
@@ -132,6 +139,10 @@ public class ApplicationUtils {
             }
             vulnerabilities.add(v);
 
+        }
+        if (logger.isDebugEnabled()) {
+            logger.debug("Parsed " + vulnerabilities.size() + " vulnerabilities from JSON for portal: "
+                    + portalName);
         }
         return vulnerabilities;
     }
