@@ -69,7 +69,7 @@ function StarRatingSummary(props) {
                     <Icon className={classes.starRate}>star</Icon>
                     <div className={classes.ratingSummary}>
                         <div aria-label='User rating' className={classes.userRating}>
-                            <Typography variant='body1'>{avgRating}</Typography>
+                            <Typography variant='body1'>{Number(avgRating).toFixed(1)}</Typography>
                             <Typography aria-label='out of five' variant='body1'>/5.0</Typography>
                         </div>
                         <Typography aria-label='Number of users who has rated' variant='body1' gutterBottom align='left'>
