@@ -42,17 +42,26 @@ public class Util {
      * @throws FileNotFoundException if the file is not found in the given path
      */
     public static Map<String, Object> readJsonFile(String path, ServletContext context) throws FileNotFoundException {
+        if (path == null || context == null) {
+            log.error("Cannot read JSON file: path or context is null");
+            throw new IllegalArgumentException("Path and context cannot be null");
+        }
         String realPath = context.getRealPath(path);
         if (log.isDebugEnabled()) {
             log.debug("Reading JSON file from path: " + realPath);
         }
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(realPath));
-        Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
-        Map<String, Object> jsonMap = (Map) gson.fromJson(bufferedReader, Map.class);
-        if (log.isDebugEnabled()) {
-            log.debug("Successfully read JSON file from path: " + realPath);
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(realPath));
+            Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
+            Map<String, Object> jsonMap = (Map) gson.fromJson(bufferedReader, Map.class);
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully read JSON file from path: " + realPath);
+            }
+            return jsonMap;
+        } catch (FileNotFoundException e) {
+            log.error("JSON file not found at path: " + realPath);
+            throw e;
         }
-        return jsonMap;
     }
 
     /**
@@ -62,6 +71,10 @@ public class Util {
      * @return value in the given path of the nested tree map
      */
     public static Object readJsonObj(Map json, String path) {
+        if (json == null || path == null) {
+            log.warn("Cannot read JSON object: json or path is null");
+            return null;
+        }
         if (log.isDebugEnabled()) {
             log.debug("Reading JSON object from path: " + path);
         }
@@ -76,6 +89,10 @@ public class Util {
                 return null;
             }
             nestedJson = (Map) nestedJson.get(pathString);
+            if (nestedJson == null) {
+                log.warn("Null value encountered in JSON path traversal at: " + pathString);
+                return null;
+            }
         }
 
         if (!nestedJson.containsKey(pathStrings[pathStrings.length - 1])) {
@@ -95,6 +112,9 @@ public class Util {
      * @return returns the loopback origin constructed using the host
      */
     public static String getLoopbackOrigin(String host) {
+        if (host == null || host.isEmpty()) {
+            log.warn("Host is null or empty, using default host");
+        }
         int mgtTransportPort = APIUtil.getCarbonTransportPort("https"); // This is the actual server port (management) , Not the proxy port
         String loopbackOrigin = "https://" + host + ":" + mgtTransportPort; // Unless there is a port offset this is https://localhost:9443
         if (log.isDebugEnabled()) {
@@ -107,14 +127,32 @@ public class Util {
         if (log.isDebugEnabled()) {
             log.debug("Retrieving external IDP origin");
         }
-        return APIUtil.getExternalIDPOrigin();
+        try {
+            String idpOrigin = APIUtil.getExternalIDPOrigin();
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully retrieved IDP origin: " + idpOrigin);
+            }
+            return idpOrigin;
+        } catch (APIManagementException e) {
+            log.error("Failed to retrieve external IDP origin", e);
+            throw e;
+        }
     }
 
     public static String getIDPCheckSessionEndpoint() throws APIManagementException {
         if (log.isDebugEnabled()) {
             log.debug("Retrieving external IDP check session endpoint");
         }
-        return APIUtil.getExternalIDPCheckSessionEndpoint();
+        try {
+            String endpoint = APIUtil.getExternalIDPCheckSessionEndpoint();
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully retrieved IDP check session endpoint: " + endpoint);
+            }
+            return endpoint;
+        } catch (APIManagementException e) {
+            log.error("Failed to retrieve external IDP check session endpoint", e);
+            throw e;
+        }
     }
 
     /**
@@ -135,12 +173,16 @@ public class Util {
      * @return returns the app context replacing the proxy context if exists
      */
     public static String getAppContextForServerUrl(String context, String proxyContext) {
+        if (context == null) {
+            log.warn("Context is null, returning null");
+            return null;
+        }
         String appContext = context;
         if (proxyContext != null && !proxyContext.isEmpty()) {
             appContext = appContext.replace(proxyContext, "");
             if (log.isDebugEnabled()) {
-                log.debug("App context after removing proxy context: " + appContext + ", original context: "
-                        + context + ", proxy context: " + proxyContext);
+                log.debug("App context after removing proxy: " + appContext + ", original: " + context
+                        + ", proxy: " + proxyContext);
             }
         }
         return appContext;

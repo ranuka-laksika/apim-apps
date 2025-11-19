@@ -34,11 +34,11 @@ public class ApplicationUtils {
             fileOutput.close();
             logger.info("Serialized vulnerability data saved for portal: {}, branch: {}", portalName, branchName);
         } catch (FileNotFoundException e) {
-            logger.error("File not found while serializing data for portal: " + portalName + ", branch: "
-                    + branchName, e);
+            logger.error("File not found while serializing data for portal: {}, branch: {}", portalName,
+                    branchName, e);
         } catch (IOException e) {
-            logger.error("IO error while serializing data for portal: " + portalName + ", branch: "
-                    + branchName, e);
+            logger.error("IO error while serializing data for portal: {}, branch: {}", portalName, branchName,
+                    e);
         }
     }
 
@@ -60,11 +60,11 @@ public class ApplicationUtils {
             logger.warn("Vulnerability data file not found. Application may be running for the first time");
             return null;
         } catch (IOException e) {
-            logger.error("IO error while deserializing data for portal: " + portalName + ", branch: "
-                    + branchName, e);
+            logger.error("IO error while deserializing data for portal: {}, branch: {}", portalName, branchName,
+                    e);
         } catch (ClassNotFoundException e) {
-            logger.error("Class not found while deserializing data for portal: " + portalName + ", branch: "
-                    + branchName, e);
+            logger.error("Class not found while deserializing data for portal: {}, branch: {}", portalName,
+                    branchName, e);
         }
         return table;
     }
@@ -107,15 +107,14 @@ public class ApplicationUtils {
             resource = fileInput.readAllBytes();
             text = new String(resource);
         } catch (FileNotFoundException e) {
-            logger.error("JSON file not found: " + path + " for portal: " + portalName + ", branch: "
-                    + branchName);
+            logger.error("JSON file not found: {} for portal: {}, branch: {}", path, portalName, branchName);
             throw e;
 
 
 
 
         } catch (IOException e) {
-            logger.error("IO error while reading JSON file: " + path, e);
+            logger.error("IO error while reading JSON file: {}", path, e);
         }
 
         JSONObject jsonDocument = (JSONObject) JSONValue.parse(text);
@@ -141,8 +140,8 @@ public class ApplicationUtils {
 
         }
         if (logger.isDebugEnabled()) {
-            logger.debug("Parsed " + vulnerabilities.size() + " vulnerabilities from JSON for portal: "
-                    + portalName);
+            logger.debug("Parsed {} vulnerabilities from JSON for portal: {}", vulnerabilities.size(),
+                    portalName);
         }
         return vulnerabilities;
     }

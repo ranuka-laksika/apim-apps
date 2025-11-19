@@ -52,13 +52,18 @@ public class Util {
             log.debug("Reading JSON file from path: " + path);
         }
         String realPath = context.getRealPath(path);
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(realPath));
-        Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
-        Map<String, Object> jsonMap = (Map) gson.fromJson(bufferedReader, Map.class);
-        if (log.isDebugEnabled()) {
-            log.debug("Successfully read JSON file from path: " + path);
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(realPath));
+            Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
+            Map<String, Object> jsonMap = (Map) gson.fromJson(bufferedReader, Map.class);
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully read JSON file from path: " + path);
+            }
+            return jsonMap;
+        } catch (FileNotFoundException e) {
+            log.error("JSON file not found at path: " + (path != null ? path : "null"), e);
+            throw e;
         }
-        return jsonMap;
     }
 
     /**
@@ -76,18 +81,17 @@ public class Util {
 
         for (String pathString : Arrays.copyOfRange(pathStrings, 0, pathStrings.length - 1)) {
             if (!nestedJson.containsKey(pathString)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Path element not found in JSON: " + pathString);
-                }
+                log.warn("Path element '" + (pathString != null ? pathString : "null")
+                        + "' not found in JSON for path: " + (path != null ? path : "null"));
                 return null;
             }
             nestedJson = (Map) nestedJson.get(pathString);
         }
 
         if (!nestedJson.containsKey(pathStrings[pathStrings.length - 1])) {
-            if (log.isDebugEnabled()) {
-                log.debug("Final path element not found in JSON: " + pathStrings[pathStrings.length - 1]);
-            }
+            log.warn("Final path element '" + (pathStrings[pathStrings.length - 1] != null
+                    ? pathStrings[pathStrings.length - 1] : "null") + "' not found in JSON for path: "
+                    + (path != null ? path : "null"));
             return null;
         }
         return nestedJson.get(pathStrings[pathStrings.length - 1]);
@@ -101,7 +105,8 @@ public class Util {
      * @return String loopback origin
      */
     public static String getLoopbackOrigin(String host) {
-        int mgtTransportPort = APIUtil.getCarbonTransportPort("https"); // This is the actual server port (management) , Not the proxy port
+        // This is the actual server port (management), not the proxy port
+        int mgtTransportPort = APIUtil.getCarbonTransportPort("https");
         String loopbackOrigin = "https://" + host + ":" + mgtTransportPort;
         if (log.isDebugEnabled()) {
             log.debug("Generated loopback origin: " + loopbackOrigin);
@@ -110,24 +115,48 @@ public class Util {
     }
 
     public static String getIDPOrigin() throws APIManagementException {
-        return APIUtil.getExternalIDPOrigin();
+        try {
+            String idpOrigin = APIUtil.getExternalIDPOrigin();
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved IDP origin: " + (idpOrigin != null ? idpOrigin : "null"));
+            }
+            return idpOrigin;
+        } catch (APIManagementException e) {
+            log.error("Failed to retrieve external IDP origin", e);
+            throw e;
+        }
     }
 
     public static String getIDPCheckSessionEndpoint() throws APIManagementException {
-        return APIUtil.getExternalIDPCheckSessionEndpoint();
+        try {
+            String endpoint = APIUtil.getExternalIDPCheckSessionEndpoint();
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved IDP check session endpoint: " + (endpoint != null ? endpoint : "null"));
+            }
+            return endpoint;
+        } catch (APIManagementException e) {
+            log.error("Failed to retrieve external IDP check session endpoint", e);
+            throw e;
+        }
     }
 
-    public static String getTenantBasePublisherContext(HttpServletRequest request, String context) throws APIManagementException {
+    public static String getTenantBasePublisherContext(HttpServletRequest request, String context)
+            throws APIManagementException {
         String tenantDomain = getTenantDomain(request);
         String tenantContext = APIUtil.getTenantBasedPublisherContext(tenantDomain);
         String resultContext = tenantContext != null && !tenantContext.equals(" ") ? tenantContext : context;
+        if (tenantContext == null || tenantContext.equals(" ")) {
+            log.warn("Tenant context not found for tenant '" + (tenantDomain != null ? tenantDomain : "null")
+                    + "', using fallback context: " + (context != null ? context : "null"));
+        }
         if (log.isDebugEnabled()) {
             log.debug("Tenant base publisher context for tenant " + tenantDomain + ": " + resultContext);
         }
         return resultContext;
     }
 
-    public static String getTenantBasedLoginCallBack(HttpServletRequest request, String loginSuffix) throws APIManagementException {
+    public static String getTenantBasedLoginCallBack(HttpServletRequest request, String loginSuffix)
+            throws APIManagementException {
         String tenantDomain = getTenantDomain(request);
         Map publisherDomainMapping = APIUtil.getTenantBasedPublisherDomainMapping(tenantDomain);
         if (publisherDomainMapping != null) {
@@ -151,7 +180,8 @@ public class Util {
         }
     }
 
-    public static String getTenantBasedLogoutCallBack(HttpServletRequest request, String logoutSuffix) throws APIManagementException {
+    public static String getTenantBasedLogoutCallBack(HttpServletRequest request, String logoutSuffix)
+            throws APIManagementException {
         String tenantDomain = getTenantDomain(request);
         Map publisherDomainMapping = APIUtil.getTenantBasedPublisherDomainMapping(tenantDomain);
         if (publisherDomainMapping != null) {
@@ -175,9 +205,21 @@ public class Util {
         }
     }
 
-    public static boolean isPerTenantServiceProviderEnabled(HttpServletRequest request) throws APIManagementException, RegistryException {
+    public static boolean isPerTenantServiceProviderEnabled(HttpServletRequest request)
+            throws APIManagementException, RegistryException {
         String tenantDomain = getTenantDomain(request);
-        return APIUtil.isPerTenantServiceProviderEnabled(tenantDomain);
+        try {
+            boolean isEnabled = APIUtil.isPerTenantServiceProviderEnabled(tenantDomain);
+            if (log.isDebugEnabled()) {
+                log.debug("Per-tenant service provider enabled for tenant '"
+                        + (tenantDomain != null ? tenantDomain : "null") + "': " + isEnabled);
+            }
+            return isEnabled;
+        } catch (APIManagementException | RegistryException e) {
+            log.error("Failed to check if per-tenant service provider is enabled for tenant: "
+                    + (tenantDomain != null ? tenantDomain : "null"), e);
+            throw e;
+        }
     }
 
     public static String getTenantDomain(HttpServletRequest request) {
@@ -186,9 +228,8 @@ public class Util {
             tenantDomain = request.getHeader("X-WSO2-Tenant");
             if (tenantDomain == null) {
                 tenantDomain = "carbon.super";
-                if (log.isDebugEnabled()) {
-                    log.debug("Tenant domain not found in request, using default: carbon.super");
-                }
+                log.warn("Tenant domain not found in request parameter or X-WSO2-Tenant header, "
+                        + "using default: carbon.super");
             }
         }
         if (log.isDebugEnabled()) {
@@ -197,7 +238,8 @@ public class Util {
         return tenantDomain;
     }
 
-    public static String getServiceProviderTenantDomain(HttpServletRequest request) throws APIManagementException, RegistryException {
+    public static String getServiceProviderTenantDomain(HttpServletRequest request)
+            throws APIManagementException, RegistryException {
         String tenantDomain = getTenantDomain(request);
         String spTenantDomain;
         if (isPerTenantServiceProviderEnabled(request)) {
@@ -212,7 +254,8 @@ public class Util {
     }
 
     public static boolean isEnableEmailUserName() {
-        boolean isEnableEmailUserName = Boolean.parseBoolean(CarbonUtils.getServerConfiguration().getFirstProperty("EnableEmailUserName"));
+        boolean isEnableEmailUserName = Boolean.parseBoolean(
+                CarbonUtils.getServerConfiguration().getFirstProperty("EnableEmailUserName"));
         if (log.isDebugEnabled()) {
             log.debug("Email username enabled: " + isEnableEmailUserName);
         }

@@ -56,10 +56,15 @@ public class Util {
         String realPath = context.getRealPath(path);
         if (realPath == null) {
             log.warn("Unable to resolve real path for: " + path);
+            throw new FileNotFoundException("Real path not found for: " + path);
         }
         BufferedReader bufferedReader = new BufferedReader(new FileReader(realPath));
         Gson gson = (new GsonBuilder()).setPrettyPrinting().create();
-        return (Map) gson.fromJson(bufferedReader, Map.class);
+        Map<String, Object> jsonMap = (Map) gson.fromJson(bufferedReader, Map.class);
+        if (log.isDebugEnabled()) {
+            log.debug("Successfully read JSON file from path: " + path);
+        }
+        return jsonMap;
     }
 
     /**
@@ -72,6 +77,14 @@ public class Util {
         if (log.isDebugEnabled()) {
             log.debug("Reading JSON object from path: " + path);
         }
+        if (json == null) {
+            log.warn("JSON object is null, cannot read path: " + path);
+            return null;
+        }
+        if (path == null || path.isEmpty()) {
+            log.warn("Path is null or empty, cannot read from JSON object");
+            return null;
+        }
         String[] pathStrings = path.split("\\.");
         Map nestedJson = json;
 
@@ -83,6 +96,10 @@ public class Util {
                 return null;
             }
             nestedJson = (Map) nestedJson.get(pathString);
+            if (nestedJson == null) {
+                log.warn("Null value encountered while traversing JSON path at: " + pathString);
+                return null;
+            }
         }
 
         if (!nestedJson.containsKey(pathStrings[pathStrings.length - 1])) {
@@ -105,6 +122,10 @@ public class Util {
         if (log.isDebugEnabled()) {
             log.debug("Constructing loopback origin for host: " + host);
         }
+        if (host == null || host.isEmpty()) {
+            log.warn("Host is null or empty, cannot construct loopback origin");
+            return null;
+        }
         int mgtTransportPort = APIUtil.getCarbonTransportPort("https");
         String loopbackOrigin = "https://" + host + ":" + mgtTransportPort;
         if (log.isDebugEnabled()) {
@@ -114,11 +135,25 @@ public class Util {
     }
 
     public static String getIDPOrigin() throws APIManagementException {
-        return APIUtil.getExternalIDPOrigin();
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving external IDP origin");
+        }
+        String idpOrigin = APIUtil.getExternalIDPOrigin();
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieved IDP origin: " + idpOrigin);
+        }
+        return idpOrigin;
     }
 
     public static String getIDPCheckSessionEndpoint() throws APIManagementException {
-        return APIUtil.getExternalIDPCheckSessionEndpoint();
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving IDP check session endpoint");
+        }
+        String endpoint = APIUtil.getExternalIDPCheckSessionEndpoint();
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieved IDP check session endpoint: " + endpoint);
+        }
+        return endpoint;
     }
 
     public static String getTenantBaseStoreContext(HttpServletRequest request, String context)
@@ -132,8 +167,12 @@ public class Util {
             if (log.isDebugEnabled()) {
                 log.debug("Tenant context not found, using default context: " + context);
             }
+            return context;
         }
-        return tenantContext != null ? tenantContext : context;
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieved tenant context: " + tenantContext + " for tenant: " + tenantDomain);
+        }
+        return tenantContext;
     }
 
     public static String getTenantBasedLoginCallBack(HttpServletRequest request, String loginSuffix)
@@ -145,9 +184,17 @@ public class Util {
         Map storeDomainMapping = APIUtil.getTenantBasedStoreDomainMapping(tenantDomain);
         if (storeDomainMapping != null) {
             if (storeDomainMapping.get("login") != null) {
-                return (String) storeDomainMapping.get("login");
+                String loginUrl = (String) storeDomainMapping.get("login");
+                if (log.isDebugEnabled()) {
+                    log.debug("Login callback URL retrieved for tenant: " + tenantDomain);
+                }
+                return loginUrl;
             }
-            return "https://" + storeDomainMapping.get("customUrl") + loginSuffix;
+            String customUrl = "https://" + storeDomainMapping.get("customUrl") + loginSuffix;
+            if (log.isDebugEnabled()) {
+                log.debug("Constructed login callback URL using custom URL for tenant: " + tenantDomain);
+            }
+            return customUrl;
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Store domain mapping not found for tenant: " + tenantDomain);
@@ -165,9 +212,17 @@ public class Util {
         Map storeDomainMapping = APIUtil.getTenantBasedStoreDomainMapping(tenantDomain);
         if (storeDomainMapping != null) {
             if (storeDomainMapping.get("logout") != null) {
-                return (String) storeDomainMapping.get("logout");
+                String logoutUrl = (String) storeDomainMapping.get("logout");
+                if (log.isDebugEnabled()) {
+                    log.debug("Logout callback URL retrieved for tenant: " + tenantDomain);
+                }
+                return logoutUrl;
             }
-            return "https://" + storeDomainMapping.get("customUrl") + logoutSuffix;
+            String customUrl = "https://" + storeDomainMapping.get("customUrl") + logoutSuffix;
+            if (log.isDebugEnabled()) {
+                log.debug("Constructed logout callback URL using custom URL for tenant: " + tenantDomain);
+            }
+            return customUrl;
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Store domain mapping not found for tenant: " + tenantDomain);
@@ -182,10 +237,18 @@ public class Util {
         if (log.isDebugEnabled()) {
             log.debug("Checking if per-tenant service provider is enabled for tenant: " + tenantDomain);
         }
-        return APIUtil.isPerTenantServiceProviderEnabled(tenantDomain);
+        boolean isEnabled = APIUtil.isPerTenantServiceProviderEnabled(tenantDomain);
+        if (log.isDebugEnabled()) {
+            log.debug("Per-tenant service provider enabled status for tenant " + tenantDomain + ": " + isEnabled);
+        }
+        return isEnabled;
     }
 
     public static String getTenantDomain(HttpServletRequest request) {
+        if (request == null) {
+            log.warn("HttpServletRequest is null, returning default tenant domain: carbon.super");
+            return "carbon.super";
+        }
         String tenantDomain = request.getParameter("tenant");
         if (tenantDomain == null) {
             tenantDomain = request.getHeader("X-WSO2-Tenant");
@@ -203,7 +266,15 @@ public class Util {
     }
 
     public static String getCustomUrlEnabledDomain(HttpServletRequest request) {
-        return request.getHeader("X-WSO2-Tenant");
+        if (request == null) {
+            log.warn("HttpServletRequest is null, cannot retrieve custom URL enabled domain");
+            return null;
+        }
+        String customUrlDomain = request.getHeader("X-WSO2-Tenant");
+        if (log.isDebugEnabled()) {
+            log.debug("Custom URL enabled domain: " + customUrlDomain);
+        }
+        return customUrlDomain;
     }
 
     public static String getTenantBasedCustomUrl(HttpServletRequest request) throws APIManagementException {
@@ -213,7 +284,11 @@ public class Util {
         }
         Map storeDomainMapping = APIUtil.getTenantBasedStoreDomainMapping(tenantDomain);
         if (storeDomainMapping != null) {
-            return "https://" + storeDomainMapping.get("customUrl");
+            String customUrl = "https://" + storeDomainMapping.get("customUrl");
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved custom URL for tenant " + tenantDomain + ": " + customUrl);
+            }
+            return customUrl;
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Store domain mapping not found for tenant: " + tenantDomain);
@@ -225,6 +300,9 @@ public class Util {
     public static String getServiceProviderTenantDomain(HttpServletRequest request)
             throws APIManagementException, RegistryException {
         String tenantDomain = getTenantDomain(request);
+        if (log.isDebugEnabled()) {
+            log.debug("Determining service provider tenant domain for tenant: " + tenantDomain);
+        }
         if (isPerTenantServiceProviderEnabled(request)) {
             if (log.isDebugEnabled()) {
                 log.debug("Per-tenant service provider enabled, using tenant domain: " + tenantDomain);
@@ -239,16 +317,15 @@ public class Util {
     }
 
     public static boolean isEnableEmailUserName() {
+        if (log.isDebugEnabled()) {
+            log.debug("Checking if email username is enabled");
+        }
         boolean isEnableEmailUserName = Boolean.parseBoolean(
                 CarbonUtils.getServerConfiguration().getFirstProperty("EnableEmailUserName"));
         if (log.isDebugEnabled()) {
             log.debug("Email username enabled: " + isEnableEmailUserName);
         }
-        if (isEnableEmailUserName) {
-            return isEnableEmailUserName;
-        } else {
-            return false;
-        }
+        return isEnableEmailUserName;
     }
 
     /**
@@ -272,6 +349,10 @@ public class Util {
         if (log.isDebugEnabled()) {
             log.debug("Getting app context for server URL. Context: " + context + ", ProxyContext: "
                     + proxyContext);
+        }
+        if (context == null) {
+            log.warn("Context is null, returning empty string");
+            return "";
         }
         String appContext = context;
         if (proxyContext != null && !proxyContext.isEmpty()) {
