@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
 import APILanding from 'AppComponents/Apis/Listing/Landing';
 import MCPServerLanding from 'AppComponents/MCPServers/Landing';
@@ -144,6 +144,7 @@ const PublisherLanding = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const theme = useTheme();
+    const location = useLocation();
     const { noDataIcon } = theme.custom.landingPage.icons;
     const { bgImages } = theme.custom.landingPage.summarySection;
     const { data: settings } = usePublisherSettings();
@@ -254,7 +255,7 @@ const PublisherLanding = () => {
         };
 
         fetchData();
-    }, [fetchApis, fetchApiProducts, fetchMcpServers]);
+    }, [fetchApis, fetchApiProducts, fetchMcpServers, location]);
 
     // Fetch only the list without updating the count (used after deletion)
     const fetchApisListOnly = useCallback(async () => {
