@@ -241,7 +241,8 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/apis');
+                        // Force reload to refresh API count
+                        window.location.href = '/publisher/apis';
                     }
                 })
                 .catch((error) => {
