@@ -294,21 +294,29 @@ class TableView extends React.Component {
      * Fetch list data without updating the total count (used after deletion)
      * @param {number} rowsPerPage Number of rows per page
      * @param {number} page Current page number
+     * @param {boolean} updateTotalCount Whether to update total count from server response
      * @returns {Promise} Promise that resolves when data is fetched
      * @memberof Listing
      */
-    getDataListOnly = (rowsPerPage, page) => {
+    getDataListOnly = (rowsPerPage, page, updateTotalCount = false) => {
         const { intl } = this.props;
         this.setState({ loading: true });
         return this.xhrRequest(rowsPerPage, page).then((data) => {
             const { body } = data;
-            const { list } = body;
-            this.setState({
+            const { list, pagination } = body;
+            const stateUpdate = {
                 apisAndApiProducts: list,
                 notFound: false,
                 rowsPerPage,
                 page,
-            });
+            };
+
+            // Update total count if requested (for accuracy verification)
+            if (updateTotalCount && pagination && pagination.total !== undefined) {
+                stateUpdate.totalCount = pagination.total;
+            }
+
+            this.setState(stateUpdate);
         }).catch(() => {
             Alert.error(intl.formatMessage({
                 defaultMessage: 'Error While Loading APIs',
@@ -334,10 +342,16 @@ class TableView extends React.Component {
         if (totalCount - 1 === rowsPerPage * page && page !== 0) {
             newPage = page - 1;
         }
-        // Fetch fresh list data without overwriting the decremented count
+
+        // Fetch fresh list data quickly without overwriting the decremented count
         setTimeout(() => {
             this.getDataListOnly(rowsPerPage, newPage);
-        }, 1000);
+
+            // After a longer delay, verify count accuracy with server data
+            setTimeout(() => {
+                this.getDataListOnly(rowsPerPage, newPage, true);
+            }, 2000);
+        }, 100);
     }
 
     /**
