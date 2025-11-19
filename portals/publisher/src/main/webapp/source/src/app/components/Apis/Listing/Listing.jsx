@@ -40,11 +40,11 @@ const Root = styled('div')({
  * @returns {React.Component} @inheritdoc
  */
 function Listing(props) {
-    const { isAPIProduct, isMCPServer, theme, location: { search } } = props;
+    const { isAPIProduct, isMCPServer, theme, location: { search }, location } = props;
     // TODO: need to handle this search case separately ~tmkb
     return (
         <Root className={classes.content}>
-            <TableView isAPIProduct={isAPIProduct} isMCPServer={isMCPServer} theme={theme} query={search} />
+            <TableView isAPIProduct={isAPIProduct} isMCPServer={isMCPServer} theme={theme} query={search} locationKey={location.key} />
         </Root>
     );
 }

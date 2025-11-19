@@ -117,10 +117,12 @@ class TableView extends React.Component {
      * @param {*} prevProps previous properties
      */
     componentDidUpdate(prevProps) {
-        const { isAPIProduct, isMCPServer, query } = this.props;
+        const { isAPIProduct, isMCPServer, query, locationKey } = this.props;
         const { rowsPerPage, page } = this.state;
         if (isAPIProduct !== prevProps.isAPIProduct
-            || isMCPServer !== prevProps.isMCPServer || query !== prevProps.query) {
+            || isMCPServer !== prevProps.isMCPServer
+            || query !== prevProps.query
+            || locationKey !== prevProps.locationKey) {
             this.getData(rowsPerPage, page);
         }
     }
