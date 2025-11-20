@@ -169,7 +169,19 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/api-products');
+                        // Fetch updated API Product list and count before navigation
+                        const pageSize = 5;
+                        API.all({ limit: pageSize, offset: 0 })
+                            .then((updatedResponse) => {
+                                if (updatedResponse.body) {
+                                    // Navigate after fetching updated data
+                                    history.push('/api-products');
+                                }
+                            })
+                            .catch(() => {
+                                // Navigate anyway even if fetch fails
+                                history.push('/api-products');
+                            });
                     }
                 })
                 .catch((error) => {
@@ -205,7 +217,19 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/mcp-servers');
+                        // Fetch updated MCP Server list and count before navigation
+                        const pageSize = 5;
+                        MCPServer.all({ limit: pageSize, offset: 0 })
+                            .then((updatedResponse) => {
+                                if (updatedResponse.body) {
+                                    // Navigate after fetching updated data
+                                    history.push('/mcp-servers');
+                                }
+                            })
+                            .catch(() => {
+                                // Navigate anyway even if fetch fails
+                                history.push('/mcp-servers');
+                            });
                     }
                 })
                 .catch((error) => {
@@ -241,7 +265,19 @@ class DeleteApiButton extends React.Component {
                         updateData(id);
                         setLoading(false);
                     } else {
-                        history.push('/apis');
+                        // Fetch updated API list and count before navigation
+                        const pageSize = 5;
+                        API.all({ limit: pageSize, offset: 0 })
+                            .then((updatedResponse) => {
+                                if (updatedResponse.body) {
+                                    // Navigate after fetching updated data
+                                    history.push('/apis');
+                                }
+                            })
+                            .catch(() => {
+                                // Navigate anyway even if fetch fails
+                                history.push('/apis');
+                            });
                     }
                 })
                 .catch((error) => {
